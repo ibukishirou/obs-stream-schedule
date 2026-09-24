@@ -9,14 +9,15 @@
                    ( date + weekday / clock / title ), at the SAME font sizes
                    as 横 so switching the theme does not change the size.
 
-   A day with no entry is a rest day ("お休み"): it is dimmed (never made
-   transparent) and can be hidden entirely from control's 設定 tab.
+    A day with no entry is a rest day ("お休み"): it is drawn in the SAME
+    colours as the other days (no dimming) and can be hidden entirely from
+    control's 設定 tab.
 
    背景 — one flat rounded rectangle is laid behind the elements. Its 始点 is
    the content's own edge, never the centre of the card:
      横 : 中身の左端(日付の左)を左の基準にして、右へ伸ばす。100% = 中身の幅。
      縦 : 3段の上下の中心を基準にして、上下へ同じ距離だけ伸ばす。100% = 3段の高さ。
-          横幅を最小(20% = 160px)にして縦幅を最大(110% = 160px)にすると正方形になる。
+          縦幅はカードの上下へもはみ出して伸ばせる — 上限は 150%(横はカード内のまま)。
    So shrinking the gauge never eats into the date on the left, and the 縦
    box always grows/shrinks evenly above and below the three rows.
    It is a separate absolutely-positioned layer drawn with box-sizing:border-box,
@@ -34,7 +35,7 @@ var LINE_H = 80;            /* px — 横の1行の高さ */
 var LINE_H_TATE = 160;      /* px — 縦はカードの高さ全部を使う */
 var F_DAY = 66;             /* px — .day  */
 var F_DOW = 32;             /* px — .dow  */
-var F_TIME = 24;            /* px — .time */
+var F_TIME = 26;            /* px — .time */
 var F_TEXT = 32;            /* px — .text */
 var W_TIME_TATE = 16;       /* %  — 縦の時計の幅 */
 
@@ -50,7 +51,7 @@ var DEFAULT_OPACITY = 100;
    横 : 左の基準 = 中身の左端(BG_PAD)、100% = 中身の幅(BG_W_BASE)。
         上限 = カードの右端まで(左端から 840px = 105%)。
    縦 : 基準 = 3段の上下の中心、100% = 3段の実測の高さ。
-        上限 = カードの上下端まで(中心から同じ距離)。
+         上限 = 150% — カードの上下端をはみ出して伸ばせる。
    実寸は描くときに実測するので、数字は「測れなかったとき」の控え。 */
 var BG_PAD = 40;            /* px — カードの左右の余白 = 中身の左端 */
 var BG_W_BASE = 800;        /* px — 中身の幅 */
@@ -63,14 +64,14 @@ var BG_DEFAULT_BORDER_COLOR = "#333333";
 var BG_BORDER_W = 3;        /* px — フチの太さ */
 var BG_RADIUS = 16;         /* px — 四角の角の丸み */
 var BG_MIN_PCT = 40;        /* % — 横の横幅の下限 */
-var BG_MIN_W_TATE = 20;     /* % — 縦の横幅の下限 = 160px。
-                               縦幅の最大(110% = 160px)と同じなので、
-                               「横幅最小 + 縦幅最大」は正方形になる */
+var BG_MIN_W_TATE = 20;     /* % — 縦の横幅の下限 = 160px */
+var BG_MAX_H_TATE = 150;    /* % — 縦の縦幅の上限。カードの上下へもはみ出して伸ばせる
+                               (横の縦幅は110%のまま、カードの中に収まる) */
 
 var DEFAULT_SHOW_OFF = true;/* 予定のない日(お休み)を出すか */
 var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 var OFF_TEXT = "お休み";
-window.VS_BUILD = "20260924w";
+window.VS_BUILD = "20260925a";
 
 function pad2(n) { return (n < 10 ? "0" : "") + n; }
 function toISO(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
@@ -113,10 +114,11 @@ function read() {
 	var lo = parseInt(o.bgW, 10), lh = parseInt(o.bgH, 10);
 	var tw = parseInt(o.tateBgW, 10), th = parseInt(o.tateBgH, 10);
 	if (isNaN(tw) && isNaN(th) && st.theme === "tate") { tw = lo; th = lh; }
-	/* 縦は「横幅最小 + 縦幅最大」が正方形になるよう、横幅の下限だけ低い */
+	/* 縦は横幅の下限だけ低い。縦幅の上限はテーマでちがう —
+	   縦はカードの外へも出せるので 150%、横はカード内の 110% のまま */
 	var wMin = st.theme === "tate" ? BG_MIN_W_TATE : BG_MIN_PCT;
 	st.bgW = Math.max(wMin, Math.min(110, st.theme === "tate" ? tw : lo));
-	st.bgH = Math.max(40, Math.min(110, st.theme === "tate" ? th : lh));
+	st.bgH = Math.max(40, Math.min(st.theme === "tate" ? BG_MAX_H_TATE : 110, st.theme === "tate" ? th : lh));
 	if (isNaN(st.bgW)) st.bgW = 100;
 	if (isNaN(st.bgH)) st.bgH = 100;
 	if (typeof o.showOff === "boolean") st.showOff = o.showOff;
@@ -181,8 +183,8 @@ function lineKeyframes(n, h) {
 
 /* 縦の3段(日付/時計/タイトル)が実際に使う高さ。
    自分の CSS の定数から出すので、フォントの読み込みやアニメーションに
-   左右されない: .l1(66) + 時計(上余白6 + 上下パディング12 + 24) + タイトル(上余白6 + 32) */
-var TATE_STACK_H = F_DAY + 6 + (F_TIME + 12) + 6 + F_TEXT;   /* 146 */
+   左右されない: .l1(66) + 時計(上余白6 + 上下パディング12 + 26) + タイトル(上余白6 + 32) */
+var TATE_STACK_H = F_DAY + 6 + (F_TIME + 12) + 6 + F_TEXT;   /* 148 */
 
 /* 背景の四角の基準を出す。
    横 : 左の基準 = 中身(inner)の左端 = 日付の左端。中身の幅が 100%。
@@ -219,29 +221,36 @@ function measureBox(schedule, cls) {
 
 /* 背景 — 中身の基準から1枚だけ描く。
    横 : 左端は中身の左端で固定。右へ伸びる(カードの右端で止める)。
+        高さもカードの中に収める(今までどおり)。
    縦 : 左右は中身の中央のまま、3段の中心から上下に同じ距離だけ広げる。
+        高さはカードの上下へもはみ出して伸ばせる(上下同じ距離)。
    border-box + 実線ボーダーなので、フチを足しても外形は動かない。 */
 function boxCSS(cls, st, g) {
 	var w = Math.round(g.innerW * st.bgW / 100);
 	var h = Math.round(g.contentH * st.bgH / 100);
 	var maxW = cls === "tate" ? g.card.w : (g.card.w - g.innerL);
-	/* 中心から上下(左右)に同じ距離だけ伸ばせる上限。カードの外へは出さない */
-	var maxH = Math.floor(2 * Math.min(g.cy, g.card.h - g.cy));
-	if (maxH % 2) maxH--;
 	if (w > maxW) w = maxW;
-	if (h > maxH) h = maxH;
 	if (w < 2) w = 2;
-	if (h < 2) h = 2;
 	if (w % 2) w++;
+
+	/* 高さ — 横はカードの中に収める。縦はカードの上下へも出られる */
+	if (cls !== "tate") {
+		var maxH = Math.floor(2 * Math.min(g.cy, g.card.h - g.cy));
+		if (maxH % 2) maxH--;
+		if (h > maxH) h = maxH;
+	}
+	if (h < 2) h = 2;
 	if (h % 2) h++;
 
 	var left = Math.round(cls === "tate" ? g.innerL + (g.innerW - w) / 2 : g.innerL);
 	if (left < 0) left = 0;
 	if (left + w > g.card.w) w = g.card.w - left;
 	var top = Math.round(g.cy - h / 2);
-	if (top < 0) top = 0;
-	if (top + h > g.card.h) top = g.card.h - h;
-	if (top < 0) top = 0;
+	if (cls !== "tate") {
+		if (top < 0) top = 0;
+		if (top + h > g.card.h) top = g.card.h - h;
+		if (top < 0) top = 0;
+	}
 
 	var fill = COLOR_RE.test(st.bgFill) ? st.bgFill : BG_DEFAULT_FILL;
 	var line = COLOR_RE.test(st.bgBorderColor) ? st.bgBorderColor : BG_DEFAULT_BORDER_COLOR;
@@ -270,9 +279,9 @@ function buildCSS(lines, cls, st, g) {
 			+ base + " .time.is-empty," + base + " .text.is-empty{display:none;}";
 	}
 
-	/* お休みの日 — 薄くするのではなく暗くする (透過させない) */
-	css += "schedule .line.is-off{filter:grayscale(.6) brightness(.55);}"
-		+ "schedule .line.is-off .time{display:none;}"
+	/* お休みの日 — 色はほかの日と同じ(薄め・暗転はしない)。
+	   空の時刻バッジが出ないように .time だけ非表示にする */
+	css += "schedule .line.is-off .time{display:none;}"
 		+ "schedule .line.is-off .text{margin-top:0;}";
 
 	/* 背景の四角はカード直下の1枚。文字より後ろに置く */

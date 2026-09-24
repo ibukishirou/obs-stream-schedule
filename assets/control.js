@@ -7,8 +7,8 @@
                    viewColor:"#rrggbb", clockColor:"#rrggbb", viewOpacity:Number,
                    bgOn:Boolean, bgFill:"#rrggbb", bgBorder:Boolean,
                    bgBorderColor:"#rrggbb",
-                   bgW:Number, bgH:Number  (横のゲージ),
-                   tateBgW:Number, tateBgH:Number  (縦のゲージ),
+                    bgW:Number, bgH:Number  (横のゲージ),
+                    tateBgW:Number, tateBgH:Number  (縦のゲージ — 縦幅の上限は150%),
                    showOff:Boolean, theme:"yoko"|"tate" }
    Same key is read by view.html -> the display page mirrors this data live.
 
@@ -46,8 +46,9 @@ var DEFAULT_BG_H = 100;
 var BG_MIN = 40;                       /* % — いちばん短いところ */
 var BG_MAX = 110;                      /* % — いちばん長いところ(カードの外形まで) */
 var BG_MAX_W_YOKO = 105;               /* % — 横は左端固定なので、右へ伸ばせるのはここまで */
-var BG_MIN_W_TATE = 20;                /* % — 縦は横幅の最小=160px。縦幅の最大(160px)と同じにして、
-                                           「横幅最小 + 縦幅最大」が正方形になるようにする */
+var BG_MIN_W_TATE = 20;                /* % — 縦は横幅の最小=160pxまで縮められる */
+var BG_MAX_H_TATE = 150;               /* % — 縦の「縦幅」の上限。横(110%)より高く、
+                                           カードの上下へもはみ出して伸ばせる */
 var DEFAULT_SHOW_OFF = true;           /* お休み(予定なしの日)を表示する */
 
 /* ------------------------------------------------------------------ date */
@@ -122,10 +123,13 @@ var state = {
 };
 var els = {};
 
+/* 縦幅のゲージ — 上限はテーマでちがう(縦はカードの外へも出られるので 150% まで) */
 function clampPct(n, fallback, theme) {
 	n = parseInt(n, 10);
 	if (isNaN(n)) return fallback;
-	return Math.max(BG_MIN, Math.min(BG_MAX, n));
+	var t = theme || state.theme;
+	var hi = t === "tate" ? BG_MAX_H_TATE : BG_MAX;
+	return Math.max(BG_MIN, Math.min(hi, n));
 }
 
 /* 横幅のゲージ — 下限はテーマでちがう(縦は 20% まで縮められる) */
@@ -454,11 +458,12 @@ function syncHeader() {
 	els.bgBorderColor.value = state.bgBorderColor;
 	/* ゲージの上限 = 基準(中身)からカードの端までの距離。
 	   横 : 左端が中身の左端で固定なので、右へ伸ばせるのは 105% まで。
-	   縦 : 左右は中央のままなので 110%、高さも 110% でカードいっぱい。
-	        横幅は 20%(160px)まで縮められる → 縦幅最大(160px)と正方形になる。 */
+	        高さもカードの中に収める(上限 110% のまま)。
+	   縦 : 左右は中央のまま 110%。高さはカードの上下へもはみ出せるので
+	        上限を 150% まで拡張した。横幅は 20%(160px)まで縮められる。 */
 	els.bgW.max = state.theme === "tate" ? BG_MAX : BG_MAX_W_YOKO;
 	els.bgW.min = state.theme === "tate" ? BG_MIN_W_TATE : BG_MIN;
-	els.bgH.max = BG_MAX;
+	els.bgH.max = state.theme === "tate" ? BG_MAX_H_TATE : BG_MAX;
 	var gw = clampW(gaugeGet("bgW"), DEFAULT_BG_W);
 	var gh = clampPct(gaugeGet("bgH"), DEFAULT_BG_H);
 	gaugeSet("bgW", gw);

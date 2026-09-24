@@ -9,8 +9,8 @@
    is drawn here. The "横" (simple) skin is untouched.
 
    Sizes are the skin's own numbers on purpose — 横 and 縦 swap without the
-   type changing size:  date 66 / weekday 32 / clock 24 / title 32.
-   The stacked rows use the whole 160px card, which fits the 146px they need.
+   type changing size:  date 66 / weekday 32 / clock 26 / title 32.
+   The stacked rows use the whole 160px card, which fits the 148px they need.
    -------------------------------------------------------------------------- */
 schedule.tate {
 	width: 880px; height: 160px;
@@ -29,7 +29,7 @@ schedule.tate inner {
 
 schedule.tate .line {
 	width: 100%; height: 160px;
-	/* 3段(146px)を 7.5px 上へ寄せて、文字のインクがカードの上下中心に来るようにする */
+	/* 3段(148px)を 7.5px 上へ寄せて、文字のインクがカードの上下中心に来るようにする */
 	padding-bottom: 15px;
 	display: flex;
 	flex-direction: column;
@@ -68,7 +68,7 @@ schedule.tate .time {
 	text-align: center;
 	background: #333;
 	color: #fff;
-	font-size: 24px;
+	font-size: 26px;
 	font-weight: 500;
 	line-height: 1em;
 	border-radius: 10px;
