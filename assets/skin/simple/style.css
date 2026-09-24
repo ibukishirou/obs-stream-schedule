@@ -1,0 +1,82 @@
+@charset "UTF-8";
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;900&display=swap');
+
+schedule.simple {
+	width: 880px; height: 160px;
+	padding: 40px;
+	font-family: "Zen Maru Gothic", system-ui;
+	font-weight: 500;
+	font-style: normal;
+	background: url("frame.svg");
+}
+
+schedule.simple inner {
+	width: 800px; height: 80px;
+	overflow: hidden;
+}
+
+schedule.simple .line {
+	width: 100%; height: 80px;
+	display: flex;
+	animation: linesSimple 60s ease infinite;
+}
+@keyframes linesSimple {
+	  0% { transform: translateY(0); }
+	 13% { transform: translateY(0); }
+	 14% { transform: translateY(-80px); }
+	 27% { transform: translateY(-80px); }
+	 28% { transform: translateY(-160px); }
+	 41% { transform: translateY(-160px); }
+	 42% { transform: translateY(-240px); }
+	 55% { transform: translateY(-240px); }
+	 56% { transform: translateY(-320px); }
+	 69% { transform: translateY(-320px); }
+	 70% { transform: translateY(-400px); }
+	 83% { transform: translateY(-400px); }
+	 84% { transform: translateY(-480px); }
+	 97% { transform: translateY(-480px); }
+	100% { transform: translateY(0); }
+}
+
+
+schedule.simple .day {
+	width: 12%; height: 100%;
+	font-size: 66px;
+	font-weight: 900;
+	line-height: 1em;
+	text-align: right;
+	color: #333;
+}
+schedule.simple .dow {
+	width: 10%; height: 100%;
+	padding: 20px 0 0 10px;
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	color: #333;
+}
+schedule.simple .time {
+	width: 13%;
+	margin: 20px 0; padding: 6px 10px 0;
+	text-align: center;
+	background: #333;
+	color: #fff;
+	font-size: 24px;
+	font-weight: 500;
+	line-height: 1em;
+	border-radius: 10px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+schedule.simple .text {
+	width: 58%;
+	margin: 0 0 0 2%; padding: 22px 0 0;
+	color: #333;
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	border-radius: 10px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}

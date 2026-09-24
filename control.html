@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>V-Schedule Control</title>
+	<link rel="stylesheet" href="assets/control.css?v=20260924g">
+</head>
+<body>
+	<header>
+		<div class="nav">
+			<button type="button" id="prev" class="iconbtn" aria-label="1日もどる">
+				<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M7.6 0 L2.4 5 L7.6 10 Z"/></svg>
+			</button>
+			<span class="datebox" id="dateBox" role="button" tabindex="0" aria-label="開始日を選ぶ">
+				<span class="dtext" id="startDateText"></span>
+				<svg class="dcal" viewBox="0 0 16 16" aria-hidden="true">
+					<rect x="1.9" y="3" width="12.2" height="11.2" rx="2.2"/>
+					<path d="M1.9 6.6h12.2"/>
+					<path d="M5.3 1.4v3.1M10.7 1.4v3.1"/>
+				</svg>
+				<input type="date" id="startDate" class="native" tabindex="-1" aria-hidden="true">
+			</span>
+			<button type="button" id="next" class="iconbtn" aria-label="1日すすむ">
+				<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.4 0 L7.6 5 L2.4 10 Z"/></svg>
+			</button>
+			<button type="button" id="today" class="ghostbtn">今日</button>
+		</div>
+	</header>
+
+	<section class="panel">
+		<div class="field">
+			<span class="flabel">表示日数</span>
+			<span class="stepper">
+				<input type="number" id="dayCount" min="1" max="31" step="1" value="7" aria-label="表示日数">
+				<span class="stp">
+					<button type="button" id="dayUp" aria-label="表示日数を増やす">
+						<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M5 0 L10 6 L0 6 Z"/></svg>
+					</button>
+					<button type="button" id="dayDown" aria-label="表示日数を減らす">
+						<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M0 0 L10 0 L5 6 Z"/></svg>
+					</button>
+				</span>
+			</span>
+		</div>
+		<div class="field">
+			<span class="flabel">テーマ</span>
+			<span class="segset" role="group" aria-label="viewテーマ">
+				<button type="button" class="seg is-on" data-theme="yoko" aria-pressed="true">横</button>
+				<button type="button" class="seg" data-theme="tate" aria-pressed="false">縦</button>
+			</span>
+		</div>
+		<div class="field">
+			<span class="flabel">カラー</span>
+			<input type="color" id="viewColor" value="#333333" aria-label="viewの色">
+		</div>
+	</section>
+
+	<main id="rows"></main>
+
+	<footer>
+		<button type="button" id="reset" class="resetbtn">すべてリセット</button>
+	</footer>
+
+	<script src="assets/control.js?v=20260924g"></script>
+</body>
+</html>

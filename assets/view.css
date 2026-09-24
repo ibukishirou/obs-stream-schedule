@@ -1,0 +1,17 @@
+@charset "UTF-8";
+
+* {
+	margin: 0; padding: 0;
+	box-sizing: border-box;
+	list-style-type: none;
+	word-wrap: break-word;
+}
+
+h1 { display: none; }
+
+schedule, inner { display: block; }
+
+/* 予定なし(お休み)の日: 色味を落とし、時刻は要素ごと非表示 */
+schedule .line.is-off { filter: grayscale(.55) opacity(.55); }
+schedule .line.is-off .time { display: none; }
+schedule .line.is-off .text { margin-top: 0; }

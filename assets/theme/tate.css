@@ -1,0 +1,87 @@
+@charset "UTF-8";
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;900&display=swap');
+
+/* --------------------------------------------------------------------------
+   V-Schedule "縦" view — the SAME card and the SAME elements as the simple
+   skin, just stacked into three centred rows:
+       (1) date + weekday   (2) time badge   (3) title
+   The frame, the font and the colours are the simple skin's own; nothing new
+   is drawn here. The "横" (simple) skin is untouched.
+   -------------------------------------------------------------------------- */
+schedule.tate {
+	width: 880px; height: 160px;
+	padding: 40px;
+	display: block;
+	font-family: "Zen Maru Gothic", system-ui;
+	font-weight: 500;
+	font-style: normal;
+	background: url("../skin/simple/frame.svg");
+}
+
+schedule.tate inner {
+	width: 800px; height: 80px;
+	overflow: hidden;
+}
+
+schedule.tate .line {
+	width: 100%; height: 80px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	animation: vslLines 60s ease infinite;
+}
+
+schedule.tate .l1 {
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	gap: 2px;
+}
+
+schedule.tate .day {
+	font-size: 25px;
+	font-weight: 900;
+	line-height: 1em;
+	text-align: center;
+	color: #333;
+}
+
+schedule.tate .dow {
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1em;
+	text-align: center;
+	color: #333;
+}
+
+schedule.tate .time {
+	width: 10%;
+	margin-top: 4px; padding: 3px 16px 4px;
+	text-align: center;
+	background: #333;
+	color: #fff;
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 1em;
+	border-radius: 9px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+schedule.tate .text {
+	max-width: 100%;
+	margin-top: 5px;
+	text-align: center;
+	color: #333;
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1.1em;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* a day without an entry keeps the same look but drops the empty pieces */
+schedule.tate .time.is-empty,
+schedule.tate .text.is-empty { display: none; }
