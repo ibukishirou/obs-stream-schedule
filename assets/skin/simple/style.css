@@ -56,13 +56,13 @@ schedule.simple .dow {
 	color: #333;
 }
 schedule.simple .time {
-	width: 13%;
-	margin: 20px 0; padding: 6px 10px 0;
+	width: 15%;
+	margin: 20px 0; padding: 2px 10px 0; /* 文字を上下中央へ(32px bold 実測) */
 	text-align: center;
 	background: #333;
 	color: #fff;
-	font-size: 26px;
-	font-weight: 500;
+	font-size: 32px;
+	font-weight: 700;
 	line-height: 1em;
 	border-radius: 10px;
 	overflow: hidden;

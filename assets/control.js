@@ -7,7 +7,7 @@
                    viewColor:"#rrggbb", clockColor:"#rrggbb", viewOpacity:Number,
                    bgOn:Boolean, bgFill:"#rrggbb", bgBorder:Boolean,
                    bgBorderColor:"#rrggbb",
-                    bgW:Number, bgH:Number  (横のゲージ),
+                    bgW:Number, bgH:Number, corner:Number  (横のゲージ + 角丸),
                     tateBgW:Number, tateBgH:Number  (縦のゲージ — 縦幅の上限は150%),
                    showOff:Boolean, theme:"yoko"|"tate" }
    Same key is read by view.html -> the display page mirrors this data live.
@@ -18,8 +18,8 @@
    Two tabs: 予定 ( ◀ / 今日 / ▶ / 表示日数 / 一覧と入力 ) and 設定, which is
    split into two sections:
      [デザイン] テーマ / ベースカラー + 時計文字カラー / 不透明度 /
-                背景 + 背景の色 / 背景のフチ + フチの色 /
-                背景の横幅 / 背景の縦幅
+                 背景 + 背景の色 / 背景のフチ + フチの色 /
+                 背景の横幅 / 背景の縦幅 / 角丸
      [項目]     お休みの表示
    A day with no entry is an "お休み" day.
    ========================================================================== */
@@ -49,6 +49,7 @@ var BG_MAX_W_YOKO = 105;               /* % — 横は左端固定なので、�
 var BG_MIN_W_TATE = 20;                /* % — 縦は横幅の最小=160pxまで縮められる */
 var BG_MAX_H_TATE = 150;               /* % — 縦の「縦幅」の上限。横(110%)より高く、
                                            カードの上下へもはみ出して伸ばせる */
+var DEFAULT_CORNER = 10;               /* % — 背景の角丸(0=四角, 100=ぷり型) */
 var DEFAULT_SHOW_OFF = true;           /* お休み(予定なしの日)を表示する */
 
 /* ------------------------------------------------------------------ date */
@@ -117,7 +118,7 @@ var state = {
 	start: "", days: DEFAULT_DAYS, items: {},
 	viewColor: DEFAULT_VIEW_COLOR, clockColor: DEFAULT_CLOCK_COLOR, viewOpacity: DEFAULT_VIEW_OPACITY,
 	bgOn: DEFAULT_BG_ON, bgFill: DEFAULT_BG_FILL, bgBorder: DEFAULT_BG_BORDER,
-	bgBorderColor: DEFAULT_BG_BORDER_COLOR, bgW: DEFAULT_BG_W, bgH: DEFAULT_BG_H,
+	bgBorderColor: DEFAULT_BG_BORDER_COLOR, bgW: DEFAULT_BG_W, bgH: DEFAULT_BG_H, corner: DEFAULT_CORNER,
 	tateBgW: DEFAULT_BG_W, tateBgH: DEFAULT_BG_H,
 	showOff: DEFAULT_SHOW_OFF, theme: DEFAULT_THEME
 };
@@ -161,6 +162,7 @@ function load() {
 	state.bgH = DEFAULT_BG_H;
 	state.tateBgW = DEFAULT_BG_W;
 	state.tateBgH = DEFAULT_BG_H;
+	state.corner = DEFAULT_CORNER;
 	state.showOff = DEFAULT_SHOW_OFF;
 	state.theme = DEFAULT_THEME;
 
@@ -194,6 +196,8 @@ function load() {
 	state.bgH = (legacy && state.theme === "tate") ? DEFAULT_BG_H : clampPct(o.bgH, DEFAULT_BG_H, "yoko");
 	state.tateBgW = clampW(tw, DEFAULT_BG_W, "tate");
 	state.tateBgH = clampPct(th, DEFAULT_BG_H, "tate");
+	var cr = parseInt(o.corner, 10);
+	if (!isNaN(cr)) state.corner = Math.max(0, Math.min(100, cr));
 	if (typeof o.showOff === "boolean") state.showOff = o.showOff;
 
 	if (o.items && typeof o.items === "object" && !Array.isArray(o.items)) {
@@ -238,6 +242,7 @@ function save() {
 			bgH: state.bgH,
 			tateBgW: state.tateBgW,
 			tateBgH: state.tateBgH,
+			corner: state.corner,
 			showOff: state.showOff,
 			theme: state.theme
 		}));
@@ -472,6 +477,8 @@ function syncHeader() {
 	els.bgH.value = gh;
 	els.bgWText.textContent = gw + "%";
 	els.bgHText.textContent = gh + "%";
+	els.corner.value = state.corner;
+	els.cornerText.textContent = state.corner + "%";
 	setTheme(state.theme);
 	setBg(state.bgOn);
 	setBgBorder(state.bgBorder);
@@ -508,6 +515,7 @@ function setBg(on) {
 	els.bgBorderColor.disabled = dis;
 	els.bgW.disabled = dis;
 	els.bgH.disabled = dis;
+	els.corner.disabled = dis;
 	for (i = 0; i < els.bgBorderBtns.length; i++) els.bgBorderBtns[i].disabled = dis;
 }
 
@@ -594,6 +602,8 @@ function init() {
 	els.bgH = document.getElementById("bgH");
 	els.bgWText = document.getElementById("bgWText");
 	els.bgHText = document.getElementById("bgHText");
+	els.corner = document.getElementById("corner");
+	els.cornerText = document.getElementById("cornerText");
 	els.dayUp = document.getElementById("dayUp");
 	els.dayDown = document.getElementById("dayDown");
 	els.themeBtns = document.querySelectorAll(".seg[data-theme]");
@@ -690,6 +700,14 @@ function init() {
 		var v = clampPct(els.bgH.value, DEFAULT_BG_H);
 		gaugeSet("bgH", v);
 		els.bgHText.textContent = v + "%";
+		save();
+	});
+
+	els.corner.addEventListener("input", function () {
+		var v = parseInt(els.corner.value, 10);
+		if (isNaN(v)) return;
+		state.corner = Math.max(0, Math.min(100, v));
+		els.cornerText.textContent = state.corner + "%";
 		save();
 	});
 

@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<title>V-Schedule Control</title>
-	<link rel="stylesheet" href="assets/control.css?v=20260925a">
+	<link rel="stylesheet" href="assets/control.css?v=20260925c">
 </head>
 <body>
 	<header>
@@ -108,11 +108,17 @@
 					<span class="opval" id="bgWText">100%</span>
 				</div>
 
-				<div class="field">
-					<span class="flabel">背景の縦幅</span>
-					<input type="range" id="bgH" min="40" max="110" step="1" value="100" aria-label="背景の縦幅">
-					<span class="opval" id="bgHText">100%</span>
-				</div>
+			<div class="field">
+				<span class="flabel">背景の縦幅</span>
+				<input type="range" id="bgH" min="40" max="110" step="1" value="100" aria-label="背景の縦幅">
+				<span class="opval" id="bgHText">100%</span>
+			</div>
+
+			<div class="field">
+				<span class="flabel">角丸</span>
+				<input type="range" id="corner" min="0" max="100" step="1" value="10" aria-label="背景の角丸">
+				<span class="opval" id="cornerText">10%</span>
+			</div>
 			</div>
 
 			<div class="sect">
@@ -133,6 +139,6 @@
 		</footer>
 	</section>
 
-	<script src="assets/control.js?v=20260925a"></script>
+	<script src="assets/control.js?v=20260925c"></script>
 </body>
 </html>

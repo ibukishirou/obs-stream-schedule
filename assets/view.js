@@ -35,9 +35,9 @@ var LINE_H = 80;            /* px — 横の1行の高さ */
 var LINE_H_TATE = 160;      /* px — 縦はカードの高さ全部を使う */
 var F_DAY = 66;             /* px — .day  */
 var F_DOW = 32;             /* px — .dow  */
-var F_TIME = 26;            /* px — .time */
+var F_TIME = 32;            /* px — .time (曜日 .dow と同じサイズ) */
 var F_TEXT = 32;            /* px — .text */
-var W_TIME_TATE = 16;       /* %  — 縦の時計の幅 */
+var W_TIME_TATE = 18;       /* %  — 縦の時計の幅 */
 
 var SEC_PER_LINE = 8.5714;  /* 60s / 7 lines, the original pace */
 var HOLD = 13 / 14;         /* part of each step a line stands still */
@@ -62,7 +62,7 @@ var BG_FILL = "#ffffff";
 var BG_DEFAULT_FILL = "#ffffff";
 var BG_DEFAULT_BORDER_COLOR = "#333333";
 var BG_BORDER_W = 3;        /* px — フチの太さ */
-var BG_RADIUS = 16;         /* px — 四角の角の丸み */
+var CORNER_DEFAULT = 10;    /* % — 角丸の既定(0=四角, 100=ぷり型)。実寸は min(w,h) から出す */
 var BG_MIN_PCT = 40;        /* % — 横の横幅の下限 */
 var BG_MIN_W_TATE = 20;     /* % — 縦の横幅の下限 = 160px */
 var BG_MAX_H_TATE = 150;    /* % — 縦の縦幅の上限。カードの上下へもはみ出して伸ばせる
@@ -71,7 +71,7 @@ var BG_MAX_H_TATE = 150;    /* % — 縦の縦幅の上限。カードの上下�
 var DEFAULT_SHOW_OFF = true;/* 予定のない日(お休み)を出すか */
 var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 var OFF_TEXT = "お休み";
-window.VS_BUILD = "20260925a";
+window.VS_BUILD = "20260925c";
 
 function pad2(n) { return (n < 10 ? "0" : "") + n; }
 function toISO(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
@@ -85,7 +85,7 @@ function read() {
 		start: todayISO(), days: 7, items: {},
 		viewColor: DEFAULT_COLOR, clockColor: DEFAULT_CLOCK, viewOpacity: DEFAULT_OPACITY,
 		bgOn: false, bgFill: BG_DEFAULT_FILL, bgBorder: true,
-		bgBorderColor: BG_DEFAULT_BORDER_COLOR, bgW: 100, bgH: 100,
+		bgBorderColor: BG_DEFAULT_BORDER_COLOR, bgW: 100, bgH: 100, corner: 10,
 		showOff: DEFAULT_SHOW_OFF, theme: "yoko"
 	};
 	var raw = null;
@@ -121,6 +121,8 @@ function read() {
 	st.bgH = Math.max(40, Math.min(st.theme === "tate" ? BG_MAX_H_TATE : 110, st.theme === "tate" ? th : lh));
 	if (isNaN(st.bgW)) st.bgW = 100;
 	if (isNaN(st.bgH)) st.bgH = 100;
+	var cr = parseInt(o.corner, 10);
+	if (!isNaN(cr)) st.corner = Math.max(0, Math.min(100, cr));
 	if (typeof o.showOff === "boolean") st.showOff = o.showOff;
 	if (o.items && typeof o.items === "object" && !Array.isArray(o.items)) {
 		for (var k in o.items) {
@@ -183,8 +185,8 @@ function lineKeyframes(n, h) {
 
 /* 縦の3段(日付/時計/タイトル)が実際に使う高さ。
    自分の CSS の定数から出すので、フォントの読み込みやアニメーションに
-   左右されない: .l1(66) + 時計(上余白6 + 上下パディング12 + 26) + タイトル(上余白6 + 32) */
-var TATE_STACK_H = F_DAY + 6 + (F_TIME + 12) + 6 + F_TEXT;   /* 148 */
+   左右されない: .l1(66) + 時計(上余白6 + 上下パディング12 + 32) + タイトル(上余白6 + 32) */
+var TATE_STACK_H = F_DAY + 6 + (F_TIME + 12) + 6 + F_TEXT;   /* 154 */
 
 /* 背景の四角の基準を出す。
    横 : 左の基準 = 中身(inner)の左端 = 日付の左端。中身の幅が 100%。
@@ -256,9 +258,10 @@ function boxCSS(cls, st, g) {
 	var line = COLOR_RE.test(st.bgBorderColor) ? st.bgBorderColor : BG_DEFAULT_BORDER_COLOR;
 	/* フチOFFでも太さは確保しておく(transparent)— 四角の大きさを変えないため */
 	var border = BG_BORDER_W + "px solid " + (st.bgBorder ? line : "transparent");
+	var rad = Math.round(Math.min(w, h) * ((st.corner == null ? CORNER_DEFAULT : st.corner) / 100));
 	return "schedule .bgbox{position:absolute;left:" + left + "px;top:" + top + "px;z-index:0;"
 		+ "box-sizing:border-box;width:" + w + "px;height:" + h + "px;"
-		+ "background:" + fill + ";border:" + border + ";border-radius:" + BG_RADIUS + "px;}";
+		+ "background:" + fill + ";border:" + border + ";border-radius:" + rad + "px;}";
 }
 
 function buildCSS(lines, cls, st, g) {
@@ -274,7 +277,7 @@ function buildCSS(lines, cls, st, g) {
 			+ base + " .l1{display:flex;align-items:baseline;justify-content:center;gap:6px;}"
 			+ base + " .day" + reset + base + " .day{font-size:" + F_DAY + "px;font-weight:900;line-height:1em;text-align:center;}"
 			+ base + " .dow" + reset + base + " .dow{font-size:" + F_DOW + "px;font-weight:500;line-height:1em;text-align:center;}"
-			+ base + " .time" + reset + base + " .time{width:" + W_TIME_TATE + "%;margin:6px 0 0;padding:6px 10px;text-align:center;font-size:" + F_TIME + "px;font-weight:500;line-height:1em;border-radius:10px;overflow:hidden;white-space:nowrap;}"
+			+ base + " .time" + reset + base + " .time{width:" + W_TIME_TATE + "%;margin:6px 0 0;padding:3px 10px 9px;text-align:center;font-size:" + F_TIME + "px;font-weight:500;line-height:1em;border-radius:10px;overflow:hidden;white-space:nowrap;}"
 			+ base + " .text" + reset + base + " .text{max-width:100%;margin:6px 0 0;text-align:center;font-size:" + F_TEXT + "px;font-weight:500;line-height:1em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}"
 			+ base + " .time.is-empty," + base + " .text.is-empty{display:none;}";
 	}
@@ -386,6 +389,15 @@ function build() {
 			contentH: cls === "tate" ? TATE_STACK_H : LINE_H, cy: BG_CARD_H / 2 };
 	}
 
+	/* 縦だけ — 背景がカードの上下へはみ出しても上端が見え枠で切れないように、
+	   表示域の高さに余裕があればカードを上下中央へ置く(横は上端固定のまま) */
+	if (cls === "tate") {
+		var extra = Math.round(((window.innerHeight || 0) - g.card.h) / 2);
+		schedule.style.marginTop = extra > 0 ? extra + "px" : "";
+	} else {
+		schedule.style.marginTop = "";
+	}
+
 	/* 背景の四角はカード直下に1枚だけ */
 	var oldBox = schedule.querySelector(".bgbox");
 	if (oldBox && oldBox.parentNode) oldBox.parentNode.removeChild(oldBox);
@@ -426,6 +438,7 @@ function start() {
 		build();
 	});
 	window.addEventListener("focus", build);
+	window.addEventListener("resize", build);
 	document.addEventListener("visibilitychange", function () {
 		if (!document.hidden) build();
 	});
