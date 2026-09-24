@@ -29,6 +29,8 @@ schedule.tate inner {
 
 schedule.tate .line {
 	width: 100%; height: 160px;
+	/* 3段(146px)を 7.5px 上へ寄せて、文字のインクがカードの上下中心に来るようにする */
+	padding-bottom: 15px;
 	display: flex;
 	flex-direction: column;
 	align-items: center;

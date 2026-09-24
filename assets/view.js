@@ -70,7 +70,7 @@ var BG_MIN_W_TATE = 20;     /* % — 縦の横幅の下限 = 160px。
 var DEFAULT_SHOW_OFF = true;/* 予定のない日(お休み)を出すか */
 var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 var OFF_TEXT = "お休み";
-window.VS_BUILD = "20260924r";
+window.VS_BUILD = "20260924w";
 
 function pad2(n) { return (n < 10 ? "0" : "") + n; }
 function toISO(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
@@ -209,34 +209,13 @@ function measureBox(schedule, cls) {
 		return { card: card, innerL: innerL, innerW: innerW, contentH: LINE_H, cy: innerTop + innerH / 2 };
 	}
 
-	var top = Infinity, bottom = -Infinity;
-	var oTop = Infinity, oBottom = -Infinity;
-	var lines = schedule.querySelectorAll(".line");
-	for (var i = 0; i < lines.length; i++) {
-		var lr = lines[i].getBoundingClientRect(), lt = lines[i].offsetTop;
-		var kids = lines[i].children;
-		for (var j = 0; j < kids.length; j++) {
-			var k = kids[j], kr = k.getBoundingClientRect();
-			if (!kr.width && !kr.height) continue;   /* お休みで消えている段 */
-			/* 行の矩形との引き算なので、行に乗っている transform は打ち消える */
-			var y = kr.top - lr.top, b = kr.bottom - lr.top;
-			if (y < top) top = y;
-			if (b > bottom) bottom = b;
-			var oy = k.offsetTop - lt, ob = oy + k.offsetHeight;
-			if (oy < oTop) oTop = oy;
-			if (ob > oBottom) oBottom = ob;
-		}
-	}
-	if (!isFinite(top) || bottom <= top) {
-		top = (innerH - TATE_STACK_H) / 2;
-		bottom = top + TATE_STACK_H;
-	}
-	window.VS_DBG = "tate rect[" + top + "," + bottom + "] off[" + oTop + "," + oBottom + "] innerTop" + innerTop + " ch" + (bottom - top) + " cy" + (innerTop + (top + bottom) / 2);
+	var cy = innerTop + innerH / 2;   /* 積みを寄せてあるので文字のインクはカードの上下中心 */
 	return {
 		card: card, innerL: innerL, innerW: innerW,
-		contentH: bottom - top, cy: innerTop + (top + bottom) / 2
+		contentH: TATE_STACK_H, cy: cy
 	};
 }
+
 
 /* 背景 — 中身の基準から1枚だけ描く。
    横 : 左端は中身の左端で固定。右へ伸びる(カードの右端で止める)。
@@ -246,7 +225,9 @@ function boxCSS(cls, st, g) {
 	var w = Math.round(g.innerW * st.bgW / 100);
 	var h = Math.round(g.contentH * st.bgH / 100);
 	var maxW = cls === "tate" ? g.card.w : (g.card.w - g.innerL);
-	var maxH = Math.round(2 * Math.min(g.cy, g.card.h - g.cy));
+	/* 中心から上下(左右)に同じ距離だけ伸ばせる上限。カードの外へは出さない */
+	var maxH = Math.floor(2 * Math.min(g.cy, g.card.h - g.cy));
+	if (maxH % 2) maxH--;
 	if (w > maxW) w = maxW;
 	if (h > maxH) h = maxH;
 	if (w < 2) w = 2;
@@ -258,6 +239,8 @@ function boxCSS(cls, st, g) {
 	if (left < 0) left = 0;
 	if (left + w > g.card.w) w = g.card.w - left;
 	var top = Math.round(g.cy - h / 2);
+	if (top < 0) top = 0;
+	if (top + h > g.card.h) top = g.card.h - h;
 	if (top < 0) top = 0;
 
 	var fill = COLOR_RE.test(st.bgFill) ? st.bgFill : BG_DEFAULT_FILL;
@@ -278,7 +261,7 @@ function buildCSS(lines, cls, st, g) {
 
 	if (cls === "tate") {
 		css += "schedule.tate inner{width:800px;height:160px;overflow:hidden;}"
-			+ base + "{width:100%;height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;}"
+			+ base + "{width:100%;height:160px;padding-bottom:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;}"
 			+ base + " .l1{display:flex;align-items:baseline;justify-content:center;gap:6px;}"
 			+ base + " .day" + reset + base + " .day{font-size:" + F_DAY + "px;font-weight:900;line-height:1em;text-align:center;}"
 			+ base + " .dow" + reset + base + " .dow{font-size:" + F_DOW + "px;font-weight:500;line-height:1em;text-align:center;}"
@@ -385,7 +368,14 @@ function build() {
 	schedule.style.position = "relative";
 	/* 先にテーマのクラスを入れてから測る — 先に測ると別のレイアウトを測ってしまう */
 	schedule.className = cls;
-	var g = measureBox(schedule, cls);
+	var g;
+	try {
+		g = measureBox(schedule, cls);
+	} catch (e) {
+		window.VS_ERR = "measure:" + (e && e.message ? e.message : e);
+		g = { card: { w: BG_CARD_W, h: BG_CARD_H }, innerL: BG_PAD, innerW: BG_W_BASE,
+			contentH: cls === "tate" ? TATE_STACK_H : LINE_H, cy: BG_CARD_H / 2 };
+	}
 
 	/* 背景の四角はカード直下に1枚だけ */
 	var oldBox = schedule.querySelector(".bgbox");
@@ -407,8 +397,21 @@ function build() {
 	window.VS_OPACITY = st.viewOpacity;
 }
 
+/* Webフォントが後から届くと、インクの測り方が変わる。縦+背景ONのときだけ
+   読み込み完了後と load 後に測り直す(横レイアウトは何も変わらない)。 */
+function rebuildForFont() {
+	var st = read();
+	if (!st.bgOn || st.theme !== "tate") return;
+	build();
+}
+
 function start() {
 	build();
+	if (typeof document !== "undefined" && document.fonts && document.fonts.ready &&
+		typeof document.fonts.ready.then === "function") {
+		document.fonts.ready.then(function () { rebuildForFont(); });
+	}
+	window.addEventListener("load", function () { rebuildForFont(); });
 	window.addEventListener("storage", function (ev) {
 		if (ev.key && ev.key !== STORE_KEY) return;
 		build();
