@@ -4,10 +4,23 @@
    Storage key : "vschedule.v1"
    Shape       : { start:"YYYY-MM-DD", days:Number,
                    items:{ "YYYY-MM-DD":[ {t:"HH:MM", x:"text"}, ... ] },
-                   viewColor:"#rrggbb", theme:"yoko"|"tate" }
+                   viewColor:"#rrggbb", clockColor:"#rrggbb", viewOpacity:Number,
+                   bgOn:Boolean, bgFill:"#rrggbb", bgBorder:Boolean,
+                   bgBorderColor:"#rrggbb",
+                   bgW:Number, bgH:Number  (横のゲージ),
+                   tateBgW:Number, tateBgH:Number  (縦のゲージ),
+                   showOff:Boolean, theme:"yoko"|"tate" }
    Same key is read by view.html -> the display page mirrors this data live.
 
-   One page, no tabs: 表示日数 / テーマ / カラー sit in a single settings row.
+   「背景の横幅」「背景の縦幅」だけはテーマごとに別の値を持つ
+   (他の項目は横・縦で共通)。
+
+   Two tabs: 予定 ( ◀ / 今日 / ▶ / 表示日数 / 一覧と入力 ) and 設定, which is
+   split into two sections:
+     [デザイン] テーマ / ベースカラー + 時計文字カラー / 不透明度 /
+                背景 + 背景の色 / 背景のフチ + フチの色 /
+                背景の横幅 / 背景の縦幅
+     [項目]     お休みの表示
    A day with no entry is an "お休み" day.
    ========================================================================== */
 (function () {
@@ -18,9 +31,25 @@ var DOW = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 var MAX_DAYS = 31;
 var DEFAULT_DAYS = 7;
 var DEFAULT_VIEW_COLOR = "#333333"; /* the view's ink — the simple skin's own colour */
+var DEFAULT_CLOCK_COLOR = "#ffffff";/* 時計の文字の色 */
 var DEFAULT_THEME = "yoko";         /* yoko = simple skin / tate = stacked rows */
 var OFF_LABEL = "お休み";
 var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+var DEFAULT_VIEW_OPACITY = 100;
+
+var DEFAULT_BG_ON = false;             /* 背景の四角 — 既定はOFF(何も描かない) */
+var DEFAULT_BG_FILL = "#ffffff";       /* 四角の塗り */
+var DEFAULT_BG_BORDER = true;          /* 四角のフチ */
+var DEFAULT_BG_BORDER_COLOR = "#333333";
+var DEFAULT_BG_W = 100;                /* % — 基準(カードの内側いっぱい)に対する割合 */
+var DEFAULT_BG_H = 100;
+var BG_MIN = 40;                       /* % — いちばん短いところ */
+var BG_MAX = 110;                      /* % — いちばん長いところ(カードの外形まで) */
+var BG_MAX_W_YOKO = 105;               /* % — 横は左端固定なので、右へ伸ばせるのはここまで */
+var BG_MIN_W_TATE = 20;                /* % — 縦は横幅の最小=160px。縦幅の最大(160px)と同じにして、
+                                           「横幅最小 + 縦幅最大」が正方形になるようにする */
+var DEFAULT_SHOW_OFF = true;           /* お休み(予定なしの日)を表示する */
+
 /* ------------------------------------------------------------------ date */
 function pad2(n) { return (n < 10 ? "0" : "") + n; }
 function toISO(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
@@ -85,15 +114,50 @@ function normTime(v) {
 /* ----------------------------------------------------------------- state */
 var state = {
 	start: "", days: DEFAULT_DAYS, items: {},
-	viewColor: DEFAULT_VIEW_COLOR, theme: DEFAULT_THEME
+	viewColor: DEFAULT_VIEW_COLOR, clockColor: DEFAULT_CLOCK_COLOR, viewOpacity: DEFAULT_VIEW_OPACITY,
+	bgOn: DEFAULT_BG_ON, bgFill: DEFAULT_BG_FILL, bgBorder: DEFAULT_BG_BORDER,
+	bgBorderColor: DEFAULT_BG_BORDER_COLOR, bgW: DEFAULT_BG_W, bgH: DEFAULT_BG_H,
+	tateBgW: DEFAULT_BG_W, tateBgH: DEFAULT_BG_H,
+	showOff: DEFAULT_SHOW_OFF, theme: DEFAULT_THEME
 };
 var els = {};
+
+function clampPct(n, fallback, theme) {
+	n = parseInt(n, 10);
+	if (isNaN(n)) return fallback;
+	return Math.max(BG_MIN, Math.min(BG_MAX, n));
+}
+
+/* 横幅のゲージ — 下限はテーマでちがう(縦は 20% まで縮められる) */
+function clampW(n, fallback, theme) {
+	n = parseInt(n, 10);
+	if (isNaN(n)) return fallback;
+	var t = theme || state.theme;
+	var lo = t === "tate" ? BG_MIN_W_TATE : BG_MIN;
+	return Math.max(lo, Math.min(BG_MAX, n));
+}
+
+/* ゲージの値はテーマごとに別のキーへ入れる(bgW/bgH と tateBgW/tateBgH) */
+function gaugeKey(k) { return state.theme === "tate" ? "tate" + k.charAt(0).toUpperCase() + k.slice(1) : k; }
+function gaugeGet(k) { return state[gaugeKey(k)]; }
+function gaugeSet(k, v) { state[gaugeKey(k)] = v; }
 
 function load() {
 	state.start = todayISO();
 	state.days = DEFAULT_DAYS;
 	state.items = {};
 	state.viewColor = DEFAULT_VIEW_COLOR;
+	state.clockColor = DEFAULT_CLOCK_COLOR;
+	state.viewOpacity = DEFAULT_VIEW_OPACITY;
+	state.bgOn = DEFAULT_BG_ON;
+	state.bgFill = DEFAULT_BG_FILL;
+	state.bgBorder = DEFAULT_BG_BORDER;
+	state.bgBorderColor = DEFAULT_BG_BORDER_COLOR;
+	state.bgW = DEFAULT_BG_W;
+	state.bgH = DEFAULT_BG_H;
+	state.tateBgW = DEFAULT_BG_W;
+	state.tateBgH = DEFAULT_BG_H;
+	state.showOff = DEFAULT_SHOW_OFF;
 	state.theme = DEFAULT_THEME;
 
 	var raw = null;
@@ -108,7 +172,25 @@ function load() {
 	var n = parseInt(o.days, 10);
 	if (!isNaN(n)) state.days = Math.max(1, Math.min(MAX_DAYS, n));
 	if (typeof o.viewColor === "string" && COLOR_RE.test(o.viewColor)) state.viewColor = o.viewColor;
+	if (typeof o.clockColor === "string" && COLOR_RE.test(o.clockColor)) state.clockColor = o.clockColor;
+	var op = parseInt(o.viewOpacity, 10);
+	if (!isNaN(op)) state.viewOpacity = Math.max(0, Math.min(100, op));
+	if (typeof o.bgOn === "boolean") state.bgOn = o.bgOn;
+	if (typeof o.bgFill === "string" && COLOR_RE.test(o.bgFill)) state.bgFill = o.bgFill;
+	if (typeof o.bgBorder === "boolean") state.bgBorder = o.bgBorder;
+	if (typeof o.bgBorderColor === "string" && COLOR_RE.test(o.bgBorderColor)) state.bgBorderColor = o.bgBorderColor;
+	/* テーマを先に読む — 横幅の下限がテーマで変わるため */
 	if (o.theme === "yoko" || o.theme === "tate") state.theme = o.theme;
+	/* 横幅/縦幅はテーマごとに別。旧形式(bgW/bgH しか無い)は
+	   いま選んでいるテーマの枠に入れる。 */
+	var tw = parseInt(o.tateBgW, 10), th = parseInt(o.tateBgH, 10);
+	var legacy = isNaN(tw) && isNaN(th);
+	if (legacy && state.theme === "tate") { tw = parseInt(o.bgW, 10); th = parseInt(o.bgH, 10); }
+	state.bgW = (legacy && state.theme === "tate") ? DEFAULT_BG_W : clampW(o.bgW, DEFAULT_BG_W, "yoko");
+	state.bgH = (legacy && state.theme === "tate") ? DEFAULT_BG_H : clampPct(o.bgH, DEFAULT_BG_H, "yoko");
+	state.tateBgW = clampW(tw, DEFAULT_BG_W, "tate");
+	state.tateBgH = clampPct(th, DEFAULT_BG_H, "tate");
+	if (typeof o.showOff === "boolean") state.showOff = o.showOff;
 
 	if (o.items && typeof o.items === "object" && !Array.isArray(o.items)) {
 		for (var k in o.items) {
@@ -142,6 +224,17 @@ function save() {
 			days: state.days,
 			items: state.items,
 			viewColor: state.viewColor,
+			clockColor: state.clockColor,
+			viewOpacity: state.viewOpacity,
+			bgOn: state.bgOn,
+			bgFill: state.bgFill,
+			bgBorder: state.bgBorder,
+			bgBorderColor: state.bgBorderColor,
+			bgW: state.bgW,
+			bgH: state.bgH,
+			tateBgW: state.tateBgW,
+			tateBgH: state.tateBgH,
+			showOff: state.showOff,
 			theme: state.theme
 		}));
 	} catch (e) { /* storage full or unavailable */ }
@@ -352,16 +445,100 @@ function focusEntry(spec) {
 
 /* ------------------------------------------------------------------- ui */
 function syncHeader() {
-	els.start.value = state.start;
-	els.startText.textContent = state.start.replace(/-/g, "/");
 	els.count.value = state.days;
 	els.viewColor.value = state.viewColor;
+	els.clockColor.value = state.clockColor;
+	els.viewOpacity.value = state.viewOpacity;
+	els.viewOpacityText.textContent = state.viewOpacity + "%";
+	els.bgFill.value = state.bgFill;
+	els.bgBorderColor.value = state.bgBorderColor;
+	/* ゲージの上限 = 基準(中身)からカードの端までの距離。
+	   横 : 左端が中身の左端で固定なので、右へ伸ばせるのは 105% まで。
+	   縦 : 左右は中央のままなので 110%、高さも 110% でカードいっぱい。
+	        横幅は 20%(160px)まで縮められる → 縦幅最大(160px)と正方形になる。 */
+	els.bgW.max = state.theme === "tate" ? BG_MAX : BG_MAX_W_YOKO;
+	els.bgW.min = state.theme === "tate" ? BG_MIN_W_TATE : BG_MIN;
+	els.bgH.max = BG_MAX;
+	var gw = clampW(gaugeGet("bgW"), DEFAULT_BG_W);
+	var gh = clampPct(gaugeGet("bgH"), DEFAULT_BG_H);
+	gaugeSet("bgW", gw);
+	gaugeSet("bgH", gh);
+	els.bgW.value = gw;
+	els.bgH.value = gh;
+	els.bgWText.textContent = gw + "%";
+	els.bgHText.textContent = gh + "%";
 	setTheme(state.theme);
+	setBg(state.bgOn);
+	setBgBorder(state.bgBorder);
+	setShowOff(state.showOff);
 }
 
-/* view theme — 横 (simple skin) / 縦 (stacked rows) */
+/* 予定 / 設定 のタブ切り替え — 1画面に積むと OBS ドックで縦に伸びるため */
+function setTab(name) {
+	var i, on;
+	for (i = 0; i < els.tabBtns.length; i++) {
+		on = els.tabBtns[i].getAttribute("data-tab") === name;
+		els.tabBtns[i].className = "tab" + (on ? " is-on" : "");
+		els.tabBtns[i].setAttribute("aria-selected", on ? "true" : "false");
+	}
+	for (i = 0; i < els.panes.length; i++) {
+		on = els.panes[i].getAttribute("data-pane") === name;
+		els.panes[i].className = "tabpane" + (on ? " is-on" : "");
+	}
+}
+
+/* 背景(四角) — 表示要素の後ろに四角を1枚敷く。OFF のときは何も描かない。
+   四角に関わる他の設定(色/フチ/長さ)は、四角が無いと意味がないのでまとめて無効化 */
+function setBg(on) {
+	state.bgOn = !!on;
+	var i;
+	for (i = 0; i < els.bgBtns.length; i++) {
+		var b = els.bgBtns[i];
+		var hit = (b.getAttribute("data-bg") === "on") === state.bgOn;
+		b.className = "seg" + (hit ? " is-on" : "");
+		b.setAttribute("aria-pressed", hit ? "true" : "false");
+	}
+	var dis = !state.bgOn;
+	els.bgFill.disabled = dis;
+	els.bgBorderColor.disabled = dis;
+	els.bgW.disabled = dis;
+	els.bgH.disabled = dis;
+	for (i = 0; i < els.bgBorderBtns.length; i++) els.bgBorderBtns[i].disabled = dis;
+}
+
+/* 背景のフチ — 四角の枠線の有無 */
+function setBgBorder(on) {
+	state.bgBorder = !!on;
+	for (var i = 0; i < els.bgBorderBtns.length; i++) {
+		var b = els.bgBorderBtns[i];
+		var hit = (b.getAttribute("data-bgborder") === "on") === state.bgBorder;
+		b.className = "seg" + (hit ? " is-on" : "");
+		b.setAttribute("aria-pressed", hit ? "true" : "false");
+	}
+	els.bgBorderColor.disabled = !state.bgOn || !state.bgBorder;
+}
+
+/* お休みの表示 */
+function setShowOff(on) {
+	state.showOff = !!on;
+	for (var i = 0; i < els.showOffBtns.length; i++) {
+		var b = els.showOffBtns[i];
+		var hit = (b.getAttribute("data-showoff") === "on") === state.showOff;
+		b.className = "seg" + (hit ? " is-on" : "");
+		b.setAttribute("aria-pressed", hit ? "true" : "false");
+	}
+}
+
+/* view theme — 横 (simple skin) / 縦 (stacked rows)
+   テーマを跨ぐときは、いま画面に出ているゲージの値を「いまのテーマの枠」に
+   預けてから、切り替え先の値を読み直す(横幅・縦幅だけがテーマ別)。 */
 function setTheme(name) {
-	state.theme = name === "tate" ? "tate" : "yoko";
+	var next = name === "tate" ? "tate" : "yoko";
+	if (next !== state.theme) {
+		gaugeSet("bgW", clampW(els.bgW.value, DEFAULT_BG_W));
+		gaugeSet("bgH", clampPct(els.bgH.value, DEFAULT_BG_H));
+		state.theme = next;
+	}
 	for (var i = 0; i < els.themeBtns.length; i++) {
 		var b = els.themeBtns[i];
 		var on = b.getAttribute("data-theme") === state.theme;
@@ -381,36 +558,37 @@ function setDays(n) {
 	render();
 }
 
-/* the box is a plain "YYYY/MM/DD" label; the native date input is the picker */
-function openPicker() {
-	if (typeof els.start.showPicker === "function") {
-		try { els.start.showPicker(); return; } catch (e) { /* not allowed here */ }
-	}
-	els.start.focus();
-	els.start.click();
-}
-
+/* ◀ / ▶ はどちらも開始日を1日ずらすだけ。今日は今日へ戻す */
 function step(delta) {
 	state.start = addDays(state.start, delta);
 	save();
-	syncHeader();
 	render();
 }
 
 function goToday() {
 	state.start = todayISO();
 	save();
-	syncHeader();
 	render();
 }
 
 function init() {
 	els.rows = document.getElementById("rows");
-	els.start = document.getElementById("startDate");
-	els.startText = document.getElementById("startDateText");
-	els.dateBox = document.getElementById("dateBox");
+	els.tabBtns = document.querySelectorAll(".tab[data-tab]");
+	els.panes = document.querySelectorAll(".tabpane[data-pane]");
+	els.bgBtns = document.querySelectorAll(".seg[data-bg]");
+	els.bgBorderBtns = document.querySelectorAll(".seg[data-bgborder]");
+	els.showOffBtns = document.querySelectorAll(".seg[data-showoff]");
 	els.count = document.getElementById("dayCount");
 	els.viewColor = document.getElementById("viewColor");
+	els.clockColor = document.getElementById("clockColor");
+	els.viewOpacity = document.getElementById("viewOpacity");
+	els.viewOpacityText = document.getElementById("viewOpacityText");
+	els.bgFill = document.getElementById("bgFill");
+	els.bgBorderColor = document.getElementById("bgBorderColor");
+	els.bgW = document.getElementById("bgW");
+	els.bgH = document.getElementById("bgH");
+	els.bgWText = document.getElementById("bgWText");
+	els.bgHText = document.getElementById("bgHText");
 	els.dayUp = document.getElementById("dayUp");
 	els.dayDown = document.getElementById("dayDown");
 	els.themeBtns = document.querySelectorAll(".seg[data-theme]");
@@ -427,13 +605,30 @@ function init() {
 	els.next.addEventListener("click", function () { step(+1); });
 	els.today.addEventListener("click", goToday);
 
-	els.dateBox.addEventListener("click", openPicker);
-	els.dateBox.addEventListener("keydown", function (ev) {
-		if (ev.key === "Enter" || ev.key === " ") {
-			ev.preventDefault();
-			openPicker();
-		}
-	});
+	setTab("sched");
+	for (var tb = 0; tb < els.tabBtns.length; tb++) {
+		els.tabBtns[tb].addEventListener("click", function () {
+			setTab(this.getAttribute("data-tab"));
+		});
+	}
+	for (var bb = 0; bb < els.bgBtns.length; bb++) {
+		els.bgBtns[bb].addEventListener("click", function () {
+			setBg(this.getAttribute("data-bg") === "on");
+			save();
+		});
+	}
+	for (var gb = 0; gb < els.bgBorderBtns.length; gb++) {
+		els.bgBorderBtns[gb].addEventListener("click", function () {
+			setBgBorder(this.getAttribute("data-bgborder") === "on");
+			save();
+		});
+	}
+	for (var sb = 0; sb < els.showOffBtns.length; sb++) {
+		els.showOffBtns[sb].addEventListener("click", function () {
+			setShowOff(this.getAttribute("data-showoff") === "on");
+			save();
+		});
+	}
 
 	els.dayUp.addEventListener("click", function () { setDays(state.days + 1); });
 	els.dayDown.addEventListener("click", function () { setDays(state.days - 1); });
@@ -441,6 +636,7 @@ function init() {
 	for (var t = 0; t < els.themeBtns.length; t++) {
 		els.themeBtns[t].addEventListener("click", function () {
 			setTheme(this.getAttribute("data-theme"));
+			syncHeader();
 			save();
 			render();
 		});
@@ -452,11 +648,44 @@ function init() {
 		save();
 	});
 
-	els.start.addEventListener("change", function () {
-		if (!isISO(els.start.value)) { syncHeader(); return; }
-		state.start = els.start.value;
+	els.clockColor.addEventListener("input", function () {
+		if (!COLOR_RE.test(els.clockColor.value)) return;
+		state.clockColor = els.clockColor.value;
 		save();
-		render();
+	});
+
+	els.viewOpacity.addEventListener("input", function () {
+		var v = parseInt(els.viewOpacity.value, 10);
+		if (isNaN(v)) return;
+		state.viewOpacity = Math.max(0, Math.min(100, v));
+		els.viewOpacityText.textContent = state.viewOpacity + "%";
+		save();
+	});
+
+	els.bgFill.addEventListener("input", function () {
+		if (!COLOR_RE.test(els.bgFill.value)) return;
+		state.bgFill = els.bgFill.value;
+		save();
+	});
+
+	els.bgBorderColor.addEventListener("input", function () {
+		if (!COLOR_RE.test(els.bgBorderColor.value)) return;
+		state.bgBorderColor = els.bgBorderColor.value;
+		save();
+	});
+
+	els.bgW.addEventListener("input", function () {
+		var v = clampW(els.bgW.value, DEFAULT_BG_W);
+		gaugeSet("bgW", v);
+		els.bgWText.textContent = v + "%";
+		save();
+	});
+
+	els.bgH.addEventListener("input", function () {
+		var v = clampPct(els.bgH.value, DEFAULT_BG_H);
+		gaugeSet("bgH", v);
+		els.bgHText.textContent = v + "%";
+		save();
 	});
 
 	els.count.addEventListener("change", function () { setDays(els.count.value); });

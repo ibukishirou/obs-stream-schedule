@@ -4,64 +4,135 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<title>V-Schedule Control</title>
-	<link rel="stylesheet" href="assets/control.css?v=20260924g">
+	<link rel="stylesheet" href="assets/control.css?v=20260924r">
 </head>
 <body>
 	<header>
-		<div class="nav">
+		<nav class="tabs" role="tablist" aria-label="表示切り替え">
+			<button type="button" class="tab is-on" data-tab="sched" role="tab" aria-selected="true">予定</button>
+			<button type="button" class="tab" data-tab="conf" role="tab" aria-selected="false">設定</button>
+		</nav>
+	</header>
+
+	<!-- ── 予定タブ ─────────────────────────────────────────────── -->
+	<section class="tabpane is-on" data-pane="sched">
+		<div class="lane">
 			<button type="button" id="prev" class="iconbtn" aria-label="1日もどる">
 				<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M7.6 0 L2.4 5 L7.6 10 Z"/></svg>
 			</button>
-			<span class="datebox" id="dateBox" role="button" tabindex="0" aria-label="開始日を選ぶ">
-				<span class="dtext" id="startDateText"></span>
-				<svg class="dcal" viewBox="0 0 16 16" aria-hidden="true">
-					<rect x="1.9" y="3" width="12.2" height="11.2" rx="2.2"/>
-					<path d="M1.9 6.6h12.2"/>
-					<path d="M5.3 1.4v3.1M10.7 1.4v3.1"/>
-				</svg>
-				<input type="date" id="startDate" class="native" tabindex="-1" aria-hidden="true">
-			</span>
+			<button type="button" id="today" class="ghostbtn">今日</button>
 			<button type="button" id="next" class="iconbtn" aria-label="1日すすむ">
 				<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.4 0 L7.6 5 L2.4 10 Z"/></svg>
 			</button>
-			<button type="button" id="today" class="ghostbtn">今日</button>
-		</div>
-	</header>
-
-	<section class="panel">
-		<div class="field">
-			<span class="flabel">表示日数</span>
-			<span class="stepper">
-				<input type="number" id="dayCount" min="1" max="31" step="1" value="7" aria-label="表示日数">
-				<span class="stp">
-					<button type="button" id="dayUp" aria-label="表示日数を増やす">
-						<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M5 0 L10 6 L0 6 Z"/></svg>
-					</button>
-					<button type="button" id="dayDown" aria-label="表示日数を減らす">
-						<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M0 0 L10 0 L5 6 Z"/></svg>
-					</button>
+			<span class="lanedays">
+				<span class="flabel">表示日数</span>
+				<span class="stepper">
+					<input type="number" id="dayCount" min="1" max="31" step="1" value="7" aria-label="表示日数">
+					<span class="stp">
+						<button type="button" id="dayUp" aria-label="表示日数を増やす">
+							<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M5 0 L10 6 L0 6 Z"/></svg>
+						</button>
+						<button type="button" id="dayDown" aria-label="表示日数を減らす">
+							<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M0 0 L10 0 L5 6 Z"/></svg>
+						</button>
+					</span>
 				</span>
 			</span>
 		</div>
-		<div class="field">
-			<span class="flabel">テーマ</span>
-			<span class="segset" role="group" aria-label="viewテーマ">
-				<button type="button" class="seg is-on" data-theme="yoko" aria-pressed="true">横</button>
-				<button type="button" class="seg" data-theme="tate" aria-pressed="false">縦</button>
-			</span>
-		</div>
-		<div class="field">
-			<span class="flabel">カラー</span>
-			<input type="color" id="viewColor" value="#333333" aria-label="viewの色">
-		</div>
+		<main id="rows"></main>
 	</section>
 
-	<main id="rows"></main>
+	<!-- ── 設定タブ ─────────────────────────────────────────────── -->
+	<section class="tabpane" data-pane="conf">
+		<div class="panel">
 
-	<footer>
-		<button type="button" id="reset" class="resetbtn">すべてリセット</button>
-	</footer>
+			<div class="sect">
+				<div class="secttl">デザイン</div>
 
-	<script src="assets/control.js?v=20260924g"></script>
+				<div class="field">
+					<span class="flabel">テーマ</span>
+					<span class="segset" role="group" aria-label="viewテーマ">
+						<button type="button" class="seg is-on" data-theme="yoko" aria-pressed="true">横</button>
+						<button type="button" class="seg" data-theme="tate" aria-pressed="false">縦</button>
+					</span>
+				</div>
+
+				<div class="field pair">
+					<span class="fgrp">
+						<span class="flabel">ベースカラー</span>
+						<input type="color" id="viewColor" class="cplate" value="#333333" aria-label="ベースカラー">
+					</span>
+					<span class="fgrp">
+						<span class="flabel">時計文字カラー</span>
+						<input type="color" id="clockColor" class="cplate" value="#ffffff" aria-label="時計文字カラー">
+					</span>
+				</div>
+
+				<div class="field">
+					<span class="flabel">不透明度</span>
+					<input type="range" id="viewOpacity" min="0" max="100" step="1" value="100" aria-label="文字の不透明度">
+					<span class="opval" id="viewOpacityText">100%</span>
+				</div>
+
+				<div class="field pair">
+					<span class="fgrp">
+						<span class="flabel">背景</span>
+						<span class="segset" role="group" aria-label="背景の四角">
+							<button type="button" class="seg" data-bg="on" aria-pressed="false">ON</button>
+							<button type="button" class="seg is-on" data-bg="off" aria-pressed="true">OFF</button>
+						</span>
+					</span>
+					<span class="fgrp">
+						<span class="flabel">背景の色</span>
+						<input type="color" id="bgFill" class="cplate" value="#ffffff" aria-label="背景の色">
+					</span>
+				</div>
+
+				<div class="field pair">
+					<span class="fgrp">
+						<span class="flabel">背景のフチ</span>
+						<span class="segset" role="group" aria-label="背景のフチ">
+							<button type="button" class="seg is-on" data-bgborder="on" aria-pressed="true">ON</button>
+							<button type="button" class="seg" data-bgborder="off" aria-pressed="false">OFF</button>
+						</span>
+					</span>
+					<span class="fgrp">
+						<span class="flabel">フチの色</span>
+						<input type="color" id="bgBorderColor" class="cplate" value="#333333" aria-label="フチの色">
+					</span>
+				</div>
+
+				<div class="field">
+					<span class="flabel">背景の横幅</span>
+					<input type="range" id="bgW" min="40" max="110" step="1" value="100" aria-label="背景の横幅">
+					<span class="opval" id="bgWText">100%</span>
+				</div>
+
+				<div class="field">
+					<span class="flabel">背景の縦幅</span>
+					<input type="range" id="bgH" min="40" max="110" step="1" value="100" aria-label="背景の縦幅">
+					<span class="opval" id="bgHText">100%</span>
+				</div>
+			</div>
+
+			<div class="sect">
+				<div class="secttl">項目</div>
+
+				<div class="field">
+					<span class="flabel">お休みの表示</span>
+					<span class="segset" role="group" aria-label="お休みの表示">
+						<button type="button" class="seg is-on" data-showoff="on" aria-pressed="true">ON</button>
+						<button type="button" class="seg" data-showoff="off" aria-pressed="false">OFF</button>
+					</span>
+				</div>
+			</div>
+
+		</div>
+		<footer>
+			<button type="button" id="reset" class="resetbtn">すべてリセット</button>
+		</footer>
+	</section>
+
+	<script src="assets/control.js?v=20260924r"></script>
 </body>
 </html>

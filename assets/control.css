@@ -45,14 +45,55 @@ header {
 	z-index: 20;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: 6px;
 	height: 55px;
-	padding: 0 7px;
+	padding: 0 9px;
 	background: var(--bg);
 	border-bottom: 1px solid var(--line);
 }
 
-.nav { display: flex; align-items: center; gap: 5px; }
+/* 予定 / 設定 のタブ */
+.tabs { display: flex; align-items: center; gap: 4px; }
+.tab {
+	height: 33px;
+	padding: 0 20px;
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: var(--radius);
+	color: var(--muted);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+.tab:hover { color: var(--text); }
+.tab.is-on { background: var(--field); border-color: var(--border); color: var(--text); }
+
+.tabpane { display: none; }
+.tabpane.is-on { display: block; }
+
+/* 予定タブ — 開始日 / 今日 / 表示日数 を1レーンに収める */
+.lane {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	gap: 5px;
+	padding: 11px 6px;
+	background: #1A1C20;
+	border-bottom: 1px solid var(--line);
+}
+.lanedays {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+.lane .datebox { width: 124px; flex: 0 1 124px; }
+.lane .ghostbtn { padding: 0 9px; white-space: nowrap; }
+.lane .stepper input { width: 42px; }
+.lane .flabel { font-size: 11px; }
 
 .iconbtn {
 	width: 33px;
@@ -141,19 +182,38 @@ header {
 /* ------------------------------------------------- settings (one page) */
 .panel {
 	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 10px 26px;
-	padding: 11px 10px 12px 12px;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 13px;
+	padding: 12px 9px;
 	border-bottom: 1px solid var(--line);
 	background: #1A1C20;
 }
+/* セクション — 「デザイン」「項目」を罫線で分ける */
+.sect { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.sect + .sect { padding-top: 12px; border-top: 1px solid var(--border); }
+.secttl {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .12em;
+	color: var(--dim);
+}
 .field { display: flex; align-items: center; gap: 10px; }
+.panel .field { width: 100%; }
+.field > .flabel { flex: 0 0 100px; }
+.panel input[type="range"] { flex: 1 1 auto; min-width: 0; }
+/* 2つ並ぶ行 — 間隔を空けず、左から順に並べる */
+.field.pair { justify-content: flex-start; gap: 18px; }
+.fgrp { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.fgrp > .flabel { flex: 0 0 auto; }
+/* 背景OFFのときの「背景のフチ」— 押せないので薄く */
+.seg:disabled { opacity: .35; cursor: default; }
 .flabel {
 	font-size: 12px;
 	font-weight: 500;
 	color: var(--muted);
 	letter-spacing: .02em;
+	white-space: nowrap;
 }
 
 /* number + up / down */
@@ -208,7 +268,7 @@ header {
 .stp svg { width: 8px; height: 5px; fill: currentColor; display: block; }
 
 /* colour plate */
-input[type="color"]#viewColor {
+input[type="color"].cplate {
 	width: 33px;
 	height: 33px;
 	padding: 3px;
@@ -221,14 +281,65 @@ input[type="color"]#viewColor {
 	box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
 	transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
 }
-input[type="color"]#viewColor:hover {
+input[type="color"].cplate:hover {
 	background: #4A505A;
 	border-color: #565D68;
 	box-shadow: 0 0 0 1px rgba(255, 255, 255, .24);
 }
-input[type="color"]#viewColor::-webkit-color-swatch-wrapper { padding: 0; }
-input[type="color"]#viewColor::-webkit-color-swatch { border: none; border-radius: 4px; }
-input[type="color"]#viewColor::-moz-color-swatch { border: none; border-radius: 4px; }
+input[type="color"].cplate::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"].cplate::-webkit-color-swatch { border: none; border-radius: 4px; }
+input[type="color"].cplate::-moz-color-swatch { border: none; border-radius: 4px; }
+input[type="color"].cplate:disabled {
+	opacity: .3;
+	cursor: default;
+	box-shadow: none;
+	background: #3E444C;
+	border-color: var(--border);
+}
+
+input[type="range"]#viewOpacity {
+	width: 132px;
+	height: 33px;
+	margin: 0;
+	background: transparent;
+	-webkit-appearance: none;
+	appearance: none;
+	cursor: pointer;
+}
+input[type="range"]#viewOpacity::-webkit-slider-runnable-track {
+	height: 4px;
+	background: #3E444C;
+	border-radius: 2px;
+}
+input[type="range"]#viewOpacity::-webkit-slider-thumb {
+	width: 14px; height: 14px;
+	margin-top: -5px;
+	background: #E8EAED;
+	border: none;
+	border-radius: 50%;
+	-webkit-appearance: none;
+	appearance: none;
+}
+input[type="range"]#viewOpacity::-moz-range-track {
+	height: 4px;
+	background: #3E444C;
+	border-radius: 2px;
+}
+input[type="range"]#viewOpacity::-moz-range-thumb {
+	width: 14px; height: 14px;
+	background: #E8EAED;
+	border: none;
+	border-radius: 50%;
+}
+input[type="range"]#viewOpacity:focus { outline: none; }
+input[type="range"]#viewOpacity:focus::-webkit-slider-thumb { box-shadow: 0 0 0 2px rgba(114, 183, 252, .55); }
+
+.opval {
+	min-width: 40px;
+	font-size: 12px;
+	color: var(--dim);
+	font-variant-numeric: tabular-nums;
+}
 
 /* segmented radio (theme) */
 .segset {
@@ -461,8 +572,11 @@ footer {
 }
 .resetbtn:hover { border-color: var(--red); background: rgba(224, 96, 79, .08); }
 
-@media (max-width: 560px) {
+@media (max-width: 460px) {
 	.dcell { flex: 0 0 42px; width: 42px; }
 	.dnum { font-size: 24px; }
-	.datebox { width: 104px; }
+	.lane { gap: 4px; padding: 11px 5px; }
+	.field > .flabel { flex: 0 0 84px; }
+	.fgrp > .flabel { font-size: 11px; }
+	.fgrp { gap: 6px; }
 }
