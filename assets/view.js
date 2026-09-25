@@ -71,7 +71,7 @@ var BG_MAX_H_TATE = 150;    /* % — 縦の縦幅の上限。カードの上下�
 var DEFAULT_SHOW_OFF = true;/* 予定のない日(お休み)を出すか */
 var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 var OFF_TEXT = "お休み";
-window.VS_BUILD = "20260925c";
+window.VS_BUILD = "20260925d";
 
 function pad2(n) { return (n < 10 ? "0" : "") + n; }
 function toISO(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
@@ -278,7 +278,7 @@ function buildCSS(lines, cls, st, g) {
 			+ base + " .day" + reset + base + " .day{font-size:" + F_DAY + "px;font-weight:900;line-height:1em;text-align:center;}"
 			+ base + " .dow" + reset + base + " .dow{font-size:" + F_DOW + "px;font-weight:500;line-height:1em;text-align:center;}"
 			+ base + " .time" + reset + base + " .time{width:" + W_TIME_TATE + "%;margin:6px 0 0;padding:3px 10px 9px;text-align:center;font-size:" + F_TIME + "px;font-weight:500;line-height:1em;border-radius:10px;overflow:hidden;white-space:nowrap;}"
-			+ base + " .text" + reset + base + " .text{max-width:100%;margin:6px 0 0;text-align:center;font-size:" + F_TEXT + "px;font-weight:500;line-height:1em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}"
+			+ base + " .text" + reset + base + " .text{max-width:100%;margin:6px 0 -8px;padding-bottom:8px;text-align:center;font-size:" + F_TEXT + "px;font-weight:500;line-height:1em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}"
 			+ base + " .time.is-empty," + base + " .text.is-empty{display:none;}";
 	}
 

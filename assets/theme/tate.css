@@ -78,7 +78,10 @@ schedule.tate .time {
 
 schedule.tate .text {
 	max-width: 100%;
-	margin: 6px 0 0;
+	/* 下に8pxの逃がし(実測: ゼン丸ゴシックのインクは line-height:1 だと
+	   32pxの箱の下へ最大4.5pxはみ出す)。marginで相殺するので積みの高さは変わらない */
+	margin: 6px 0 -8px;
+	padding-bottom: 8px;
 	text-align: center;
 	color: #333;
 	font-size: 32px;
