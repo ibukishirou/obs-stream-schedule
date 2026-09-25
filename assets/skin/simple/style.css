@@ -40,16 +40,25 @@ schedule.simple .line {
 
 
 schedule.simple .day {
-	width: 12%; height: 100%;
+	width: 9%; height: 100%; /* 12%から9%へ: 月(4.5%)のぶん。日付+月で今までの幅 */
 	font-size: 66px;
 	font-weight: 900;
 	line-height: 1em;
 	text-align: right;
 	color: #333;
 }
+schedule.simple .month {
+	width: 4.5%; height: 100%; /* 6%から4.5%へ: 「9.」と日付の隙間を詰める(縦テーマは別定義なので無影響) */
+	padding: 32px 0 0 20px;
+	white-space: nowrap; /* 「.」が次の行に折り返されないように */ /* .dow と同じ下端 = 日付のインク下端に揃える(実測) */
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	color: #333;
+}
 schedule.simple .dow {
 	width: 10%; height: 100%;
-	padding: 20px 0 0 10px;
+	padding: 32px 0 0 10px; /* 20pxから32pxへ: 日付のインク下端に揃える(実測Δ=12px) */
 	font-size: 32px;
 	font-weight: 500;
 	line-height: 1em;

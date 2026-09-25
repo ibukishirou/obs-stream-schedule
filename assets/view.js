@@ -6,7 +6,7 @@
    theme "yoko" -> the original SCHEDULIAN "simple" skin, untouched:
                    schedule.simple > inner > .line( .day .dow .time .text )
    theme "tate" -> the same elements stacked in three rows on the same card
-                   ( date + weekday / clock / title ), at the SAME font sizes
+                   ( month + date + weekday / clock / title ), at the SAME font sizes
                    as 横 so switching the theme does not change the size.
 
     A day with no entry is a rest day ("お休み"): it is drawn in the SAME
@@ -37,7 +37,7 @@ var F_DAY = 66;             /* px — .day  */
 var F_DOW = 32;             /* px — .dow  */
 var F_TIME = 32;            /* px — .time (曜日 .dow と同じサイズ) */
 var F_TEXT = 32;            /* px — .text */
-var W_TIME_TATE = 18;       /* %  — 縦の時計の幅 */
+var W_TIME_TATE = 21;       /* %  — 縦の時計の幅 */
 
 var SEC_PER_LINE = 8.5714;  /* 60s / 7 lines, the original pace */
 var HOLD = 13 / 14;         /* part of each step a line stands still */
@@ -71,7 +71,7 @@ var BG_MAX_H_TATE = 150;    /* % — 縦の縦幅の上限。カードの上下�
 var DEFAULT_SHOW_OFF = true;/* 予定のない日(お休み)を出すか */
 var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 var OFF_TEXT = "お休み";
-window.VS_BUILD = "20260925d";
+window.VS_BUILD = "20260925h";
 
 function pad2(n) { return (n < 10 ? "0" : "") + n; }
 function toISO(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
@@ -147,16 +147,16 @@ function buildLines(st) {
 	for (var i = 0; i < st.days; i++) {
 		var iso = addDays(st.start, i);
 		var d = fromISO(iso);
-		var day = String(d.getDate());
+		var month = (d.getMonth() + 1) + "."; var day = String(d.getDate());
 		var dow = DOW[d.getDay()];
 		var arr = Array.isArray(st.items[iso]) ? st.items[iso] : [];
 		if (!arr.length) {
 			if (st.showOff === false) continue;   /* お休みは出さない */
-			lines.push({ iso: iso, day: day, dow: dow, time: "", text: OFF_TEXT, off: true });
+			lines.push({ iso: iso, month: month, day: day, dow: dow, time: "", text: OFF_TEXT, off: true });
 			continue;
 		}
 		for (var j = 0; j < arr.length; j++) {
-			lines.push({ iso: iso, day: day, dow: dow, time: arr[j].t || "", text: arr[j].x || "", off: false });
+			lines.push({ iso: iso, month: month, day: day, dow: dow, time: arr[j].t || "", text: arr[j].x || "", off: false });
 		}
 	}
 	return lines;
@@ -277,6 +277,7 @@ function buildCSS(lines, cls, st, g) {
 			+ base + " .l1{display:flex;align-items:baseline;justify-content:center;gap:6px;}"
 			+ base + " .day" + reset + base + " .day{font-size:" + F_DAY + "px;font-weight:900;line-height:1em;text-align:center;}"
 			+ base + " .dow" + reset + base + " .dow{font-size:" + F_DOW + "px;font-weight:500;line-height:1em;text-align:center;}"
+			+ base + " .month" + reset + base + " .month{font-size:" + F_DOW + "px;font-weight:500;line-height:1em;text-align:center;}"
 			+ base + " .time" + reset + base + " .time{width:" + W_TIME_TATE + "%;margin:6px 0 0;padding:3px 10px 9px;text-align:center;font-size:" + F_TIME + "px;font-weight:500;line-height:1em;border-radius:10px;overflow:hidden;white-space:nowrap;}"
 			+ base + " .text" + reset + base + " .text{max-width:100%;margin:6px 0 -8px;padding-bottom:8px;text-align:center;font-size:" + F_TEXT + "px;font-weight:500;line-height:1em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}"
 			+ base + " .time.is-empty," + base + " .text.is-empty{display:none;}";
@@ -331,10 +332,12 @@ function textCell(value, color, markEmpty) {
 	return p;
 }
 
-/* 横 — exactly the simple skin's markup order */
+/* 横 — simple skin の並び + 月(縦と同じ month + day + dow)。
+   day の幅から月のぶんを回すので、時計とタイトルは行ごと月の分だけ右へずれる(要素間隔は不変) */
 function yokoLine(l, color, clock) {
 	var div = document.createElement("div");
 	div.className = "line vsl yoko" + (l.off ? " is-off" : "");
+	div.appendChild(cell("month", l.month, color));
 	div.appendChild(cell("day", l.day, color));
 	div.appendChild(cell("dow", l.dow, color));
 	div.appendChild(timeCell(l.time, color, clock, false));
@@ -342,13 +345,14 @@ function yokoLine(l, color, clock) {
 	return div;
 }
 
-/* 縦 — date + weekday / clock / title, three rows on the same card */
+/* 縦 — month + date + weekday / clock / title, three rows on the same card */
 function tateLine(l, color, clock) {
 	var div = document.createElement("div");
 	div.className = "line vsl tate" + (l.off ? " is-off" : "");
 
 	var row = document.createElement("div");
 	row.className = "l1";
+	row.appendChild(cell("month", l.month, color));
 	row.appendChild(cell("day", l.day, color));
 	row.appendChild(cell("dow", l.dow, color));
 

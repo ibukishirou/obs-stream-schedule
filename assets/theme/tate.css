@@ -4,12 +4,12 @@
 /* --------------------------------------------------------------------------
    V-Schedule "縦" view — the SAME card and the SAME elements as the simple
    skin, just stacked into three centred rows:
-       (1) date + weekday   (2) time badge   (3) title
+       (1) month + date + weekday   (2) time badge   (3) title
    The frame, the font and the colours are the simple skin's own; nothing new
    is drawn here. The "横" (simple) skin is untouched.
 
    Sizes are the skin's own numbers on purpose — 横 and 縦 swap without the
-   type changing size:  date 66 / weekday 32 / clock 32 (bold) / title 32.
+   type changing size:  month 32 / date 66 / weekday 32 / clock 32 (bold) / title 32.
    The stacked rows use the whole 160px card, which fits the 154px they need.
    -------------------------------------------------------------------------- */
 schedule.tate {
@@ -61,8 +61,16 @@ schedule.tate .dow {
 	color: #333;
 }
 
+schedule.tate .month {
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	text-align: center;
+	color: #333;
+}
+
 schedule.tate .time {
-	width: 18%;
+	width: 21%;
 	margin: 6px 0 0;
 	padding: 3px 10px 9px; /* 上下非対称: 文字を実測で上下中央へ */
 	text-align: center;
