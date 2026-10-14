@@ -4,18 +4,18 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<title>V-Schedule Control</title>
-	<link rel="stylesheet" href="assets/control.css?v=20260925c">
+	<link rel="stylesheet" href="assets/control.css?v=20261014b">
 </head>
 <body>
 	<header>
 		<nav class="tabs" role="tablist" aria-label="表示切り替え">
-			<button type="button" class="tab is-on" data-tab="sched" role="tab" aria-selected="true">予定</button>
-			<button type="button" class="tab" data-tab="conf" role="tab" aria-selected="false">設定</button>
+			<button type="button" class="tab is-on" id="tab-sched" aria-controls="pane-sched" data-tab="sched" role="tab" aria-selected="true">予定</button>
+			<button type="button" class="tab" id="tab-conf" aria-controls="pane-conf" data-tab="conf" role="tab" aria-selected="false">設定</button>
 		</nav>
 	</header>
 
 	<!-- ── 予定タブ ─────────────────────────────────────────────── -->
-	<section class="tabpane is-on" data-pane="sched">
+	<section class="tabpane is-on" id="pane-sched" role="tabpanel" aria-labelledby="tab-sched" data-pane="sched">
 		<div class="lane">
 			<button type="button" id="prev" class="iconbtn" aria-label="1日もどる">
 				<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M7.6 0 L2.4 5 L7.6 10 Z"/></svg>
@@ -43,7 +43,7 @@
 	</section>
 
 	<!-- ── 設定タブ ─────────────────────────────────────────────── -->
-	<section class="tabpane" data-pane="conf">
+	<section class="tabpane" id="pane-conf" role="tabpanel" aria-labelledby="tab-conf" data-pane="conf">
 		<div class="panel">
 
 			<div class="sect">
@@ -103,6 +103,15 @@
 				</div>
 
 				<div class="field">
+					<span class="flabel">横幅</span>
+					<label class="checklabel"><input type="checkbox" id="autoWidth"> 自動（最長タイトルに合わせる）</label>
+				</div>
+				<div class="field">
+					<label class="flabel" for="titleAlign">タイトル揃え</label>
+					<select id="titleAlign"><option value="left">左揃え</option><option value="center">中央揃え</option></select>
+				</div>
+
+				<div class="field">
 					<span class="flabel">背景の横幅</span>
 					<input type="range" id="bgW" min="40" max="110" step="1" value="100" aria-label="背景の横幅">
 					<span class="opval" id="bgWText">100%</span>
@@ -139,6 +148,6 @@
 		</footer>
 	</section>
 
-	<script src="assets/control.js?v=20260925c"></script>
+	<script src="assets/control.js?v=20261014b"></script>
 </body>
 </html>

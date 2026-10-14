@@ -39,8 +39,17 @@ schedule.simple .line {
 }
 
 
+schedule.simple .date {
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-start;
+	flex: 0 0 var(--date-width, auto);
+	margin-left: 20px;
+	gap: 3px;
+	height: 100%;
+}
 schedule.simple .day {
-	width: 9%; height: 100%; /* 12%から9%へ: 月(4.5%)のぶん。日付+月で今までの幅 */
+	flex: none; height: 100%;
 	font-size: 66px;
 	font-weight: 900;
 	line-height: 1em;
@@ -48,8 +57,9 @@ schedule.simple .day {
 	color: #333;
 }
 schedule.simple .month {
-	width: 4.5%; height: 100%; /* 6%から4.5%へ: 「9.」と日付の隙間を詰める(縦テーマは別定義なので無影響) */
-	padding: 32px 0 0 20px;
+	flex: none; height: 100%;
+	padding: 32px 0 0;
+	text-align: right;
 	white-space: nowrap; /* 「.」が次の行に折り返されないように */ /* .dow と同じ下端 = 日付のインク下端に揃える(実測) */
 	font-size: 32px;
 	font-weight: 500;
@@ -57,15 +67,15 @@ schedule.simple .month {
 	color: #333;
 }
 schedule.simple .dow {
-	width: 10%; height: 100%;
-	padding: 32px 0 0 10px; /* 20pxから32pxへ: 日付のインク下端に揃える(実測Δ=12px) */
+	flex: 0 0 var(--weekday-width, 80px); height: 100%;
+	padding: 32px 12px 0 10px;
 	font-size: 32px;
 	font-weight: 500;
 	line-height: 1em;
 	color: #333;
 }
 schedule.simple .time {
-	width: 15%;
+	flex: 0 0 120px;
 	margin: 20px 0; padding: 2px 10px 0; /* 文字を上下中央へ(32px bold 実測) */
 	text-align: center;
 	background: #333;
@@ -78,8 +88,8 @@ schedule.simple .time {
 	white-space: nowrap;
 }
 schedule.simple .text {
-	width: 58%;
-	margin: 0 0 0 2%; padding: 22px 0 0;
+	flex: 1 1 0; min-width: 0;
+	margin: 0 0 0 16px; padding: 22px 30px 0 0;
 	color: #333;
 	font-size: 32px;
 	font-weight: 500;
