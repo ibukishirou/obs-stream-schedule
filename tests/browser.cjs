@@ -176,6 +176,8 @@ const path = require('node:path');
     assert.equal(Number(await page.locator('#dayCount').inputValue()), beforeCount);
     await page.click('#tab-conf');
     assert.equal(await page.locator('.tabs').evaluate(el => el.getBoundingClientRect().width < 130), true);
+    assert.deepEqual(await page.locator('.secttl').allTextContents(), ['表示内容', 'レイアウト', '文字', '背景']);
+    await page.locator('[data-bg="on"]').click();
     await page.check('#autoWidth');
     assert.equal((await read()).autoWidth, true);
     assert.equal(await page.locator('#bgW').isDisabled(), true);
@@ -184,11 +186,57 @@ const path = require('node:path');
     await page.click('#tab-conf');
     assert.equal(await page.locator('#autoWidth').isChecked(), true);
     assert.equal(await page.locator('#titleAlign').inputValue(), 'center');
+    assert.equal(await page.locator('#bgW').isVisible(), true, 'automatic width keeps the manual gauge visible');
+    assert.equal(await page.locator('#bgW').isDisabled(), true);
+    await page.locator('#bgWField').hover();
+    await page.waitForFunction(() => !document.getElementById('control-help').hidden);
+    assert.match(await page.locator('#control-help').textContent(), /自動.*OFF/);
+    await page.uncheck('#autoWidth');
+    assert.equal(await page.locator('#bgW').isEnabled(), true);
+    await page.locator('[data-bgborder="off"]').click();
+    assert.equal(await page.locator('#borderColorField').isVisible(), false);
+    await page.locator('[data-bgborder="on"]').click();
+    assert.equal(await page.locator('#borderColorField').isVisible(), true);
+    await page.locator('[data-bg="off"]').click();
+    assert.equal(await page.locator('#backgroundOptions').isVisible(), false);
+    await page.locator('[data-bg="on"]').click();
+    await page.locator('#bgOpacity').fill('25');
+    await page.locator('#bgOpacity').dispatchEvent('input');
+    assert.equal((await read()).bgOpacity, 25);
+    const fieldLefts = await page.locator('#backgroundOptions .field').evaluateAll(fields => fields.filter(el => !el.hidden).map(el => el.getBoundingClientRect().left));
+    assert.equal(new Set(fieldLefts).size, 1, 'background settings are not indented');
+    await page.locator('.date-nav').hover();
+    assert.match(await page.locator('#control-help').textContent(), /表示開始日/);
+    await page.locator('.day-count').hover();
+    assert.match(await page.locator('#control-help').textContent(), /直接入力/);
+    assert.ok(await page.locator('.panel').evaluate(el => el.scrollWidth <= el.clientWidth), 'settings fit the 280px dock');
+    if (process.env.CONTROL_SCREENSHOT) {
+      await page.mouse.move(279, 899);
+      await page.screenshot({ path: process.env.CONTROL_SCREENSHOT, fullPage: true });
+    }
     await page.locator('#tab-conf').focus();
     await page.keyboard.press('ArrowLeft');
     assert.equal(await page.locator('#tab-sched').getAttribute('aria-selected'), 'true');
 
     const long = '【長時間配信】みんなで冒険！新しい世界を探索するゲーム配信';
+    for (const theme of ['yoko', 'tate']) {
+      for (const opacity of [0, 25, 100]) {
+        await seed({ start: '2026-10-14', days: 1, theme, bgOn: true, bgBorder: true, bgOpacity: opacity,
+          items: { '2026-10-14': [{ t: '07:00', x: '朝活雑談' }] } });
+        await page.goto(base + '/view.html');
+        const actual = await page.evaluate(() => ({
+          schedule: getComputedStyle(document.querySelector('schedule')).opacity,
+          box: getComputedStyle(document.querySelector('.bgbox')).opacity,
+          text: getComputedStyle(document.querySelector('.text')).opacity,
+          clock: getComputedStyle(document.querySelector('.time')).opacity
+        }));
+        assert.deepEqual(actual, { schedule: '1', box: String(opacity / 100), text: '1', clock: '1' }, 'opacity applies only to background');
+      }
+    }
+    await seed({ start: '2026-10-14', days: 1, bgOn: true, viewOpacity: 40, items: {} });
+    await page.goto(base + '/view.html');
+    assert.equal(await page.locator('.bgbox').evaluate(el => getComputedStyle(el).opacity), '0.4', 'legacy opacity is migrated to background');
+    assert.equal(await page.locator('schedule').evaluate(el => getComputedStyle(el).opacity), '1');
     const state = { start: '2026-10-20', days: 2, autoWidth: true, titleAlign: 'left', bgOn: true,
       bgFill: '#e00000', viewColor: '#ffffff', clockColor: '#e00000', bgBorder: false,
       items: { '2026-10-20': [{ t: '07:00', x: long }], '2026-10-21': [{ t: '21:00', x: '朝活雑談' }],

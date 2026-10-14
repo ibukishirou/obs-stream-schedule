@@ -71,7 +71,7 @@ var BG_MAX_H_TATE = 150;    /* % — 縦の縦幅の上限。カードの上下�
 var DEFAULT_SHOW_OFF = true;/* 予定のない日(お休み)を出すか */
 var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 var OFF_TEXT = "お休み";
-window.VS_BUILD = "20261014b";
+window.VS_BUILD = "20261014f";
 
 function pad2(n) { return (n < 10 ? "0" : "") + n; }
 function toISO(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
@@ -83,7 +83,7 @@ function todayISO() { return toISO(new Date()); }
 function read() {
 	var st = {
 		start: todayISO(), days: 7, items: {}, autoWidth: false, titleAlign: "left",
-		viewColor: DEFAULT_COLOR, clockColor: DEFAULT_CLOCK, viewOpacity: DEFAULT_OPACITY,
+		viewColor: DEFAULT_COLOR, clockColor: DEFAULT_CLOCK, bgOpacity: DEFAULT_OPACITY,
 		bgOn: false, bgFill: BG_DEFAULT_FILL, bgBorder: true,
 		bgBorderColor: BG_DEFAULT_BORDER_COLOR, bgW: 100, bgH: 100, corner: 10,
 		showOff: DEFAULT_SHOW_OFF, theme: "yoko"
@@ -103,8 +103,8 @@ function read() {
 	if (!isNaN(n)) st.days = Math.max(1, Math.min(31, n));
 	if (typeof o.viewColor === "string" && COLOR_RE.test(o.viewColor)) st.viewColor = o.viewColor;
 	if (typeof o.clockColor === "string" && COLOR_RE.test(o.clockColor)) st.clockColor = o.clockColor;
-	var op = parseInt(o.viewOpacity, 10);
-	if (!isNaN(op)) st.viewOpacity = Math.max(0, Math.min(100, op));
+	var op = parseInt(o.bgOpacity == null ? o.viewOpacity : o.bgOpacity, 10);
+	if (!isNaN(op)) st.bgOpacity = Math.max(0, Math.min(100, op));
 	if (typeof o.bgOn === "boolean") st.bgOn = o.bgOn;
 	if (typeof o.bgFill === "string" && COLOR_RE.test(o.bgFill)) st.bgFill = o.bgFill;
 	if (typeof o.bgBorder === "boolean") st.bgBorder = o.bgBorder;
@@ -263,7 +263,7 @@ function boxCSS(cls, st, g) {
 	var rad = Math.round(Math.min(w, h) * ((st.corner == null ? CORNER_DEFAULT : st.corner) / 100));
 	return "schedule .bgbox{position:absolute;left:" + left + "px;top:" + top + "px;z-index:0;"
 		+ "box-sizing:border-box;width:" + w + "px;height:" + h + "px;"
-		+ "background:" + fill + ";border:" + border + ";border-radius:" + rad + "px;}";
+		+ "opacity:" + (st.bgOpacity / 100) + ";background:" + fill + ";border:" + border + ";border-radius:" + rad + "px;}";
 }
 
 function buildCSS(lines, cls, st, g) {
@@ -475,8 +475,8 @@ function build() {
 	style.textContent = buildCSS(lines, cls, st, g);
 	document.head.appendChild(style);
 
-	schedule.style.opacity = String(st.viewOpacity / 100);
-	window.VS_OPACITY = st.viewOpacity;
+	schedule.style.opacity = "1";
+	window.VS_BG_OPACITY = st.bgOpacity;
 }
 
 /* Webフォントの読み込み後は自動横幅と縦の背景を測り直す。 */

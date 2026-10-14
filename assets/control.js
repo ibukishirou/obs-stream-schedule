@@ -4,7 +4,7 @@
    Storage key : "vschedule.v1"
    Shape       : { start:"YYYY-MM-DD", days:Number,
                    items:{ "YYYY-MM-DD":[ {t:"HH:MM", x:"text"}, ... ] },
-                   viewColor:"#rrggbb", clockColor:"#rrggbb", viewOpacity:Number,
+                   viewColor:"#rrggbb", clockColor:"#rrggbb", bgOpacity:Number,
                    bgOn:Boolean, bgFill:"#rrggbb", bgBorder:Boolean,
                    bgBorderColor:"#rrggbb",
                     bgW:Number, bgH:Number, corner:Number  (横のゲージ + 角丸),
@@ -36,7 +36,7 @@ var DEFAULT_CLOCK_COLOR = "#ffffff";/* 時計の文字の色 */
 var DEFAULT_THEME = "yoko";         /* yoko = simple skin / tate = stacked rows */
 var OFF_LABEL = "お休み";
 var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
-var DEFAULT_VIEW_OPACITY = 100;
+var DEFAULT_BG_OPACITY = 100;
 
 var DEFAULT_BG_ON = false;             /* 背景の四角 — 既定はOFF(何も描かない) */
 var DEFAULT_BG_FILL = "#ffffff";       /* 四角の塗り */
@@ -118,7 +118,7 @@ function normTime(v) {
 var state = {
 	start: "", days: DEFAULT_DAYS, items: {},
 	autoWidth: false, titleAlign: "left",
-	viewColor: DEFAULT_VIEW_COLOR, clockColor: DEFAULT_CLOCK_COLOR, viewOpacity: DEFAULT_VIEW_OPACITY,
+	viewColor: DEFAULT_VIEW_COLOR, clockColor: DEFAULT_CLOCK_COLOR, bgOpacity: DEFAULT_BG_OPACITY,
 	bgOn: DEFAULT_BG_ON, bgFill: DEFAULT_BG_FILL, bgBorder: DEFAULT_BG_BORDER,
 	bgBorderColor: DEFAULT_BG_BORDER_COLOR, bgW: DEFAULT_BG_W, bgH: DEFAULT_BG_H, corner: DEFAULT_CORNER,
 	tateBgW: DEFAULT_BG_W, tateBgH: DEFAULT_BG_H,
@@ -272,7 +272,7 @@ function load() {
 	state.items = {};
 	state.viewColor = DEFAULT_VIEW_COLOR;
 	state.clockColor = DEFAULT_CLOCK_COLOR;
-	state.viewOpacity = DEFAULT_VIEW_OPACITY;
+	state.bgOpacity = DEFAULT_BG_OPACITY;
 	state.bgOn = DEFAULT_BG_ON;
 	state.bgFill = DEFAULT_BG_FILL;
 	state.bgBorder = DEFAULT_BG_BORDER;
@@ -300,8 +300,8 @@ function load() {
 	if (!isNaN(n)) state.days = Math.max(1, Math.min(MAX_DAYS, n));
 	if (typeof o.viewColor === "string" && COLOR_RE.test(o.viewColor)) state.viewColor = o.viewColor;
 	if (typeof o.clockColor === "string" && COLOR_RE.test(o.clockColor)) state.clockColor = o.clockColor;
-	var op = parseInt(o.viewOpacity, 10);
-	if (!isNaN(op)) state.viewOpacity = Math.max(0, Math.min(100, op));
+	var op = parseInt(o.bgOpacity == null ? o.viewOpacity : o.bgOpacity, 10);
+	if (!isNaN(op)) state.bgOpacity = Math.max(0, Math.min(100, op));
 	if (typeof o.bgOn === "boolean") state.bgOn = o.bgOn;
 	if (typeof o.bgFill === "string" && COLOR_RE.test(o.bgFill)) state.bgFill = o.bgFill;
 	if (typeof o.bgBorder === "boolean") state.bgBorder = o.bgBorder;
@@ -374,7 +374,7 @@ function save() {
 			items: state.items,
 			viewColor: state.viewColor,
 			clockColor: state.clockColor,
-			viewOpacity: state.viewOpacity,
+			bgOpacity: state.bgOpacity,
 			bgOn: state.bgOn,
 			bgFill: state.bgFill,
 			bgBorder: state.bgBorder,
@@ -604,8 +604,8 @@ function syncHeader() {
 	els.count.value = state.days;
 	els.viewColor.value = state.viewColor;
 	els.clockColor.value = state.clockColor;
-	els.viewOpacity.value = state.viewOpacity;
-	els.viewOpacityText.textContent = state.viewOpacity + "%";
+	els.bgOpacity.value = state.bgOpacity;
+	els.bgOpacityText.textContent = state.bgOpacity + "%";
 	els.bgFill.value = state.bgFill;
 	els.bgBorderColor.value = state.bgBorderColor;
 	/* ゲージの上限 = 基準(中身)からカードの端までの距離。
@@ -662,6 +662,12 @@ function setBg(on) {
 	els.bgFill.disabled = dis;
 	els.bgBorderColor.disabled = dis;
 	els.bgW.disabled = dis || state.autoWidth;
+	els.bgOpacity.disabled = dis;
+	document.getElementById("backgroundOptions").hidden = dis;
+	var widthField = document.getElementById("bgWField");
+	widthField.classList.toggle("is-disabled", state.autoWidth);
+	if (state.autoWidth) widthField.setAttribute("data-help", "この横幅を変更するには、上の横幅の『自動』をOFFにしてください。");
+	else widthField.removeAttribute("data-help");
 	els.bgH.disabled = dis;
 	els.corner.disabled = dis;
 	for (i = 0; i < els.bgBorderBtns.length; i++) els.bgBorderBtns[i].disabled = dis;
@@ -677,6 +683,45 @@ function setBgBorder(on) {
 		b.setAttribute("aria-pressed", hit ? "true" : "false");
 	}
 	els.bgBorderColor.disabled = !state.bgOn || !state.bgBorder;
+	document.getElementById("borderColorField").hidden = !state.bgBorder;
+}
+
+/* Shared hover/focus help; fixed positioning keeps tips inside a narrow OBS dock. */
+function initHelp() {
+	var tip = document.createElement("div");
+	tip.id = "control-help";
+	tip.className = "control-tooltip";
+	tip.setAttribute("role", "tooltip");
+	tip.hidden = true;
+	document.body.appendChild(tip);
+	var owner = null;
+	function hide() {
+		if (owner) owner.removeAttribute("aria-describedby");
+		owner = null;
+		tip.hidden = true;
+	}
+	function show(target) {
+		if (!target) return;
+		hide();
+		owner = target;
+		tip.textContent = target.getAttribute("data-help");
+		target.setAttribute("aria-describedby", tip.id);
+		tip.hidden = false;
+		var rect = target.getBoundingClientRect();
+		tip.style.left = Math.max(6, Math.min(rect.left, window.innerWidth - tip.offsetWidth - 6)) + "px";
+		var top = rect.bottom + 6;
+		if (top + tip.offsetHeight > window.innerHeight - 6) top = rect.top - tip.offsetHeight - 6;
+		tip.style.top = Math.max(6, top) + "px";
+	}
+	document.addEventListener("pointerover", function (ev) { show(ev.target.closest("[data-help]")); });
+	document.addEventListener("pointerout", function (ev) {
+		if (owner && (!ev.relatedTarget || !owner.contains(ev.relatedTarget))) hide();
+	});
+	document.addEventListener("focusin", function (ev) { show(ev.target.closest("[data-help]")); });
+	document.addEventListener("focusout", hide);
+	document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") hide(); });
+	window.addEventListener("scroll", hide, true);
+	window.addEventListener("resize", hide);
 }
 
 /* お休みの表示 */
@@ -750,6 +795,7 @@ function goToday() {
 }
 
 function init() {
+	initHelp();
 	document.addEventListener("pointerdown", function (ev) {
 		if (activeTimePicker && !activeTimePicker.anchor.contains(ev.target) &&
 			!activeTimePicker.popup.contains(ev.target)) closeTimePicker();
@@ -786,8 +832,8 @@ function init() {
 	els.count = document.getElementById("dayCount");
 	els.viewColor = document.getElementById("viewColor");
 	els.clockColor = document.getElementById("clockColor");
-	els.viewOpacity = document.getElementById("viewOpacity");
-	els.viewOpacityText = document.getElementById("viewOpacityText");
+	els.bgOpacity = document.getElementById("bgOpacity");
+	els.bgOpacityText = document.getElementById("bgOpacityText");
 	els.bgFill = document.getElementById("bgFill");
 	els.bgBorderColor = document.getElementById("bgBorderColor");
 	els.bgW = document.getElementById("bgW");
@@ -874,11 +920,11 @@ function init() {
 		save();
 	});
 
-	els.viewOpacity.addEventListener("input", function () {
-		var v = parseInt(els.viewOpacity.value, 10);
+	els.bgOpacity.addEventListener("input", function () {
+		var v = parseInt(els.bgOpacity.value, 10);
 		if (isNaN(v)) return;
-		state.viewOpacity = Math.max(0, Math.min(100, v));
-		els.viewOpacityText.textContent = state.viewOpacity + "%";
+		state.bgOpacity = Math.max(0, Math.min(100, v));
+		els.bgOpacityText.textContent = state.bgOpacity + "%";
 		save();
 	});
 
