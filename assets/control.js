@@ -124,6 +124,121 @@ var state = {
 	showOff: DEFAULT_SHOW_OFF, theme: DEFAULT_THEME
 };
 var els = {};
+var activeTimePicker = null;
+var timePickerId = 0;
+
+function closeTimePicker() {
+	if (activeTimePicker) activeTimePicker.close();
+}
+
+/* Keep the existing text input and its 67px slot. Only the arrow and picker are new. */
+function timeControl(input, commit) {
+	var wrap = document.createElement("span");
+	wrap.className = "time-control";
+	wrap.appendChild(input);
+	input.title = "手入力可。時の上でホイール:1時間、分の上でホイール:5分";
+	var arrow = document.createElement("button");
+	arrow.type = "button";
+	arrow.className = "time-arrow";
+	arrow.textContent = "▾";
+	arrow.setAttribute("aria-label", "時刻を選択");
+	arrow.setAttribute("aria-haspopup", "dialog");
+	arrow.setAttribute("aria-expanded", "false");
+	var id = "time-picker-" + (++timePickerId);
+	arrow.setAttribute("aria-controls", id);
+	wrap.appendChild(arrow);
+
+	function wheel(ev, hour, current, update) {
+		if (!ev.deltaY) return;
+		ev.preventDefault();
+		var value = normTime(current) || "00:00";
+		var h = +value.slice(0, 2), m = +value.slice(3, 5);
+		var direction = ev.deltaY < 0 ? 1 : -1;
+		if (hour) h = Math.max(0, Math.min(23, h + direction));
+		else m = Math.max(0, Math.min(59, m + direction * 5));
+		update(pad2(h) + ":" + pad2(m));
+	}
+	input.addEventListener("wheel", function (ev) {
+		closeTimePicker();
+		var rect = input.getBoundingClientRect();
+		wheel(ev, ev.clientX < rect.left + rect.width / 2, input.value, commit);
+	}, { passive: false });
+
+	function open() {
+		if (activeTimePicker && activeTimePicker.anchor === wrap) { closeTimePicker(); return; }
+		closeTimePicker();
+		var popup = document.createElement("div");
+		popup.id = id;
+		popup.className = "time-picker";
+		popup.setAttribute("role", "dialog");
+		popup.setAttribute("aria-label", "時刻選択");
+		var fields = document.createElement("div");
+		fields.className = "time-picker-fields";
+		function selectField(labelText, count) {
+			var label = document.createElement("label");
+			label.textContent = labelText;
+			var select = document.createElement("select");
+			select.setAttribute("aria-label", labelText + "を選択");
+			for (var n = 0; n < count; n++) {
+				var option = document.createElement("option");
+				option.value = option.textContent = pad2(n);
+				select.appendChild(option);
+			}
+			label.appendChild(select);
+			fields.appendChild(label);
+			return select;
+		}
+		var hours = selectField("時", 24);
+		var minutes = selectField("分", 60);
+		var current = normTime(input.value) || "00:00";
+		hours.value = current.slice(0, 2);
+		minutes.value = current.slice(3, 5);
+		function draft() { return hours.value + ":" + minutes.value; }
+		function updateDraft(value) { hours.value = value.slice(0, 2); minutes.value = value.slice(3, 5); }
+		hours.addEventListener("wheel", function (ev) { wheel(ev, true, draft(), updateDraft); }, { passive: false });
+		minutes.addEventListener("wheel", function (ev) { wheel(ev, false, draft(), updateDraft); }, { passive: false });
+		popup.appendChild(fields);
+		var footer = document.createElement("div");
+		footer.className = "time-picker-footer";
+		var hint = document.createElement("span");
+		hint.textContent = "ホイールでも変更";
+		footer.appendChild(hint);
+		var done = document.createElement("button");
+		done.type = "button";
+		done.textContent = "決定";
+		footer.appendChild(done);
+		popup.appendChild(footer);
+		function close() {
+			if (popup.parentNode) popup.parentNode.removeChild(popup);
+			arrow.setAttribute("aria-expanded", "false");
+			activeTimePicker = null;
+		}
+		function position() {
+			if (!wrap.isConnected) { close(); return; }
+			var rect = wrap.getBoundingClientRect();
+			if (rect.bottom < 0 || rect.top > window.innerHeight) { close(); return; }
+			var left = Math.max(6, Math.min(rect.left, window.innerWidth - popup.offsetWidth - 6));
+			var top = rect.bottom + 6;
+			if (top + popup.offsetHeight > window.innerHeight - 6) top = rect.top - popup.offsetHeight - 6;
+			popup.style.left = left + "px";
+			popup.style.top = Math.max(6, top) + "px";
+		}
+		activeTimePicker = { anchor: wrap, popup: popup, close: close, position: position, arrow: arrow };
+		document.body.appendChild(popup);
+		position();
+		arrow.setAttribute("aria-expanded", "true");
+		hours.focus();
+		done.addEventListener("click", function () { commit(draft()); close(); input.focus(); });
+		popup.addEventListener("keydown", function (ev) {
+			if (ev.key === "Enter") { ev.preventDefault(); done.click(); }
+		});
+	}
+	arrow.addEventListener("click", open);
+	input.addEventListener("keydown", function (ev) {
+		if (ev.altKey && ev.key === "ArrowDown") { ev.preventDefault(); open(); }
+	});
+	return wrap;
+}
 
 /* 縦幅のゲージ — 上限はテーマでちがう(縦はカードの外へも出られるので 150% まで) */
 function clampPct(n, fallback, theme) {
@@ -269,6 +384,7 @@ function readItems(iso) {
 
 /* --------------------------------------------------------------- render */
 function render(focus) {
+	closeTimePicker();
 	var frag = document.createDocumentFragment();
 	for (var i = 0; i < state.days; i++) {
 		frag.appendChild(buildRow(addDays(state.start, i)));
@@ -411,7 +527,10 @@ function buildEntry(iso, items, index) {
 		removeEntry(iso, index, false);
 	});
 
-	entry.appendChild(time);
+	entry.appendChild(timeControl(time, function (value) {
+		time.value = item.t = value;
+		save();
+	}));
 	entry.appendChild(text);
 	entry.appendChild(del);
 	return entry;
@@ -607,6 +726,19 @@ function goToday() {
 }
 
 function init() {
+	document.addEventListener("pointerdown", function (ev) {
+		if (activeTimePicker && !activeTimePicker.anchor.contains(ev.target) &&
+			!activeTimePicker.popup.contains(ev.target)) closeTimePicker();
+	});
+	document.addEventListener("keydown", function (ev) {
+		if (ev.key === "Escape" && activeTimePicker) {
+			var arrow = activeTimePicker.arrow;
+			closeTimePicker();
+			arrow.focus();
+		}
+	});
+	window.addEventListener("resize", function () { if (activeTimePicker) activeTimePicker.position(); });
+	window.addEventListener("scroll", function () { if (activeTimePicker) activeTimePicker.position(); }, true);
 	els.autoWidth = document.getElementById("autoWidth");
 	els.titleAlign = document.getElementById("titleAlign");
 	els.autoWidth.addEventListener("change", function () {
