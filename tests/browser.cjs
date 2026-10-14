@@ -154,6 +154,26 @@ const path = require('node:path');
     assert.equal(await timeInput.inputValue(), '21:30', 'chosen time persists');
 
     await page.setViewportSize({ width: 280, height: 900 });
+    const headerLayout = await page.evaluate(() => {
+      const header = document.querySelector('header');
+      const tabs = document.querySelector('.tabs').getBoundingClientRect();
+      const date = document.querySelector('.date-nav').getBoundingClientRect();
+      const count = document.querySelector('.day-count').getBoundingClientRect();
+      return { fits: header.scrollWidth <= header.clientWidth, gap: count.left - date.right,
+        rightInset: header.getBoundingClientRect().right - count.right,
+        separated: date.left > tabs.right, sameLine: Math.abs(date.top - count.top) < 1,
+        rowsTop: document.querySelector('#rows').getBoundingClientRect().top,
+        headerBottom: header.getBoundingClientRect().bottom };
+    });
+    assert.ok(headerLayout.fits && headerLayout.sameLine && headerLayout.separated, 'all header controls fit one row at 280px');
+    assert.equal(headerLayout.gap, 6, 'date group sits beside day-count group');
+    assert.equal(headerLayout.rightInset, 5, 'navigation and day count are right aligned');
+    assert.equal(headerLayout.rowsTop, headerLayout.headerBottom, 'schedule starts immediately below the single header');
+    const beforeCount = Number(await page.locator('#dayCount').inputValue());
+    await page.click('#dayUp');
+    assert.equal(Number(await page.locator('#dayCount').inputValue()), beforeCount + 1);
+    await page.click('#dayDown');
+    assert.equal(Number(await page.locator('#dayCount').inputValue()), beforeCount);
     await page.click('#tab-conf');
     assert.equal(await page.locator('.tabs').evaluate(el => el.getBoundingClientRect().width < 130), true);
     await page.check('#autoWidth');

@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<title>V-Schedule Control</title>
-	<link rel="stylesheet" href="assets/control.css?v=20261014d">
+	<link rel="stylesheet" href="assets/control.css?v=20261014e">
 </head>
 <body>
 	<header>
@@ -12,33 +12,22 @@
 			<button type="button" class="tab is-on" id="tab-sched" aria-controls="pane-sched" data-tab="sched" role="tab" aria-selected="true">予定</button>
 			<button type="button" class="tab" id="tab-conf" aria-controls="pane-conf" data-tab="conf" role="tab" aria-selected="false">設定</button>
 		</nav>
+		<div class="header-tools">
+			<div class="date-nav" role="group" aria-label="表示する日付">
+				<button type="button" id="prev" class="headerbtn" aria-label="1日もどる">‹</button>
+				<button type="button" id="today" class="headerbtn todaybtn">今日</button>
+				<button type="button" id="next" class="headerbtn" aria-label="1日すすむ">›</button>
+			</div>
+			<div class="day-count" role="group" aria-label="表示日数">
+				<button type="button" id="dayDown" class="headerbtn" aria-label="表示日数を減らす">−</button>
+				<label class="count-label"><input type="number" id="dayCount" min="1" max="31" step="1" value="7" aria-label="表示日数"><span>日</span></label>
+				<button type="button" id="dayUp" class="headerbtn" aria-label="表示日数を増やす">＋</button>
+			</div>
+		</div>
 	</header>
 
 	<!-- ── 予定タブ ─────────────────────────────────────────────── -->
 	<section class="tabpane is-on" id="pane-sched" role="tabpanel" aria-labelledby="tab-sched" data-pane="sched">
-		<div class="lane">
-			<button type="button" id="prev" class="iconbtn" aria-label="1日もどる">
-				<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M7.6 0 L2.4 5 L7.6 10 Z"/></svg>
-			</button>
-			<button type="button" id="today" class="ghostbtn">今日</button>
-			<button type="button" id="next" class="iconbtn" aria-label="1日すすむ">
-				<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.4 0 L7.6 5 L2.4 10 Z"/></svg>
-			</button>
-			<span class="lanedays">
-				<span class="flabel">表示日数</span>
-				<span class="stepper">
-					<input type="number" id="dayCount" min="1" max="31" step="1" value="7" aria-label="表示日数">
-					<span class="stp">
-						<button type="button" id="dayUp" aria-label="表示日数を増やす">
-							<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M5 0 L10 6 L0 6 Z"/></svg>
-						</button>
-						<button type="button" id="dayDown" aria-label="表示日数を減らす">
-							<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M0 0 L10 0 L5 6 Z"/></svg>
-						</button>
-					</span>
-				</span>
-			</span>
-		</div>
 		<main id="rows"></main>
 	</section>
 
@@ -148,6 +137,6 @@
 		</footer>
 	</section>
 
-	<script src="assets/control.js?v=20261014d"></script>
+	<script src="assets/control.js?v=20261014e"></script>
 </body>
 </html>

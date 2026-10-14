@@ -47,7 +47,7 @@ header {
 	align-items: center;
 	gap: 6px;
 	height: 38px;
-	padding: 0 6px;
+	padding: 0 5px;
 	background: var(--bg);
 	border-bottom: 1px solid var(--line);
 }
@@ -55,14 +55,16 @@ header {
 /* 予定 / 設定 のタブ */
 .tabs { display: flex; align-items: stretch; gap: 0; height: 100%; }
 .tab {
-	padding: 0 12px;
+	flex: 0 0 34px;
+	width: 34px;
+	padding: 0;
 	background: transparent;
 	border: 0;
 	border-bottom: 2px solid transparent;
 	border-radius: 0;
 	color: var(--muted);
 	font: inherit;
-	font-size: 13px;
+	font-size: 12px;
 	font-weight: 500;
 	cursor: pointer;
 }
@@ -77,27 +79,30 @@ input[type="range"]:disabled { opacity: .35; }
 .tabpane { display: none; }
 .tabpane.is-on { display: block; }
 
-/* 予定タブ — 開始日 / 今日 / 表示日数 を1レーンに収める */
-.lane {
-	display: flex;
-	align-items: center;
-	flex-wrap: nowrap;
-	gap: 5px;
-	padding: 11px 6px;
-	background: #1A1C20;
-	border-bottom: 1px solid var(--line);
+/* Tabs, date navigation and day count share one compact header row. */
+.header-tools { margin-left: auto; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.date-nav, .day-count {
+	display: flex; align-items: center; flex: none;
+	background: var(--field-hi); border: 1px solid var(--border); border-radius: 6px;
 }
-.lanedays {
-	margin-left: auto;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	white-space: nowrap;
+.date-nav { padding: 0 3px; }
+.day-count { padding: 0 2px; }
+.headerbtn {
+	width: 18px; height: 28px; flex: none; padding: 0; border: 0; border-radius: 4px;
+	background: transparent; color: var(--text); font: inherit; font-size: 18px; cursor: pointer;
 }
-.lane .datebox { width: 124px; flex: 0 1 124px; }
-.lane .ghostbtn { padding: 0 9px; white-space: nowrap; }
-.lane .stepper input { width: 42px; }
-.lane .flabel { font-size: 11px; }
+.headerbtn:hover { background: var(--border-hi); }
+.headerbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.todaybtn { width: 32px; font-size: 12px; }
+.day-count .headerbtn { width: 22px; color: var(--muted); font-size: 15px; }
+.count-label { display: flex; align-items: center; gap: 1px; color: var(--muted); font-size: 11px; }
+.count-label input {
+	width: 22px; height: 28px; padding: 0; border: 0; border-radius: 4px;
+	background: transparent; color: var(--text); font: inherit; font-size: 12px;
+	text-align: center; font-variant-numeric: tabular-nums; appearance: textfield;
+}
+.count-label input::-webkit-inner-spin-button,
+.count-label input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 .iconbtn {
 	width: 33px;
@@ -610,7 +615,6 @@ footer {
 @media (max-width: 460px) {
 	.dcell { flex: 0 0 42px; width: 42px; }
 	.dnum { font-size: 24px; }
-	.lane { gap: 4px; padding: 11px 5px; }
 	.field > .flabel { flex: 0 0 84px; }
 	.fgrp > .flabel { font-size: 11px; }
 	.fgrp { gap: 6px; }
