@@ -30,6 +30,7 @@ var STORE_KEY = "vschedule.v1";
 var DOW = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 var MAX_DAYS = 31;
 var DEFAULT_DAYS = 7;
+var HISTORY_DAYS = 14;
 var DEFAULT_VIEW_COLOR = "#333333"; /* the view's ink — the simple skin's own colour */
 var DEFAULT_CLOCK_COLOR = "#ffffff";/* 時計の文字の色 */
 var DEFAULT_THEME = "yoko";         /* yoko = simple skin / tate = stacked rows */
@@ -335,9 +336,27 @@ function load() {
 			state.items[k] = arr;
 		}
 	}
+	if (pruneItems()) save();
+}
+
+/* Keep two weeks of history, future entries, and the active range plus its copy sources. */
+function pruneItems() {
+	var cutoff = addDays(todayISO(), -HISTORY_DAYS);
+	var sourceStart = addDays(state.start, -7);
+	var visibleEnd = addDays(state.start, state.days - 1);
+	var changed = false;
+	for (var iso in state.items) {
+		if (!Object.prototype.hasOwnProperty.call(state.items, iso)) continue;
+		if (iso < cutoff && (iso < sourceStart || iso > visibleEnd)) {
+			delete state.items[iso];
+			changed = true;
+		}
+	}
+	return changed;
 }
 
 function save() {
+	pruneItems();
 	var keep = {};
 	for (var k in state.items) {
 		if (Object.prototype.hasOwnProperty.call(state.items, k) &&
@@ -694,27 +713,32 @@ function setDays(n) {
 	n = parseInt(n, 10);
 	if (isNaN(n)) n = state.days;
 	n = Math.max(1, Math.min(MAX_DAYS, n));
+	var oldEnd = addDays(state.start, state.days - 1);
+	var previousDays = state.days;
 	state.days = n;
+	if (n > previousDays) fillNewDays(oldEnd);
 	els.count.value = n;
 	save();
 	render();
+}
+
+/* Both forward navigation and day-count expansion use the same defaults. */
+function fillNewDays(oldEnd) {
+	for (var i = 0; i < state.days; i++) {
+		var iso = addDays(state.start, i);
+		if (iso <= oldEnd || Object.prototype.hasOwnProperty.call(state.items, iso)) continue;
+		/* Empty arrays remember cleared dates, so expanding again does not refill them. */
+		state.items[iso] = readItems(addDays(iso, -7)).map(function (item) {
+			return { t: item.t, x: item.x };
+		});
+	}
 }
 
 /* ◀ / ▶ はどちらも開始日を1日ずらすだけ。今日は今日へ戻す */
 function step(delta) {
 	var oldStart = state.start;
 	state.start = addDays(state.start, delta);
-	if (delta > 0) {
-		for (var i = 0; i < state.days; i++) {
-			var iso = addDays(state.start, i);
-			if (iso <= addDays(oldStart, state.days - 1) ||
-				Object.prototype.hasOwnProperty.call(state.items, iso)) continue;
-			/* Keep an empty array too: a deliberately cleared date must stay empty. */
-			state.items[iso] = readItems(addDays(iso, -7)).map(function (item) {
-				return { t: item.t, x: item.x };
-			});
-		}
-	}
+	if (delta > 0) fillNewDays(addDays(oldStart, state.days - 1));
 	save();
 	render();
 }
@@ -739,6 +763,9 @@ function init() {
 	});
 	window.addEventListener("resize", function () { if (activeTimePicker) activeTimePicker.position(); });
 	window.addEventListener("scroll", function () { if (activeTimePicker) activeTimePicker.position(); }, true);
+	window.addEventListener("focus", function () {
+		if (pruneItems()) save();
+	});
 	els.autoWidth = document.getElementById("autoWidth");
 	els.titleAlign = document.getElementById("titleAlign");
 	els.autoWidth.addEventListener("change", function () {

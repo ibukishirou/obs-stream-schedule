@@ -18,7 +18,8 @@ const path = require('node:path');
   let browser;
   try {
     browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
-    const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1600, height: 900 }, timezoneId: 'Asia/Tokyo' });
+    await page.clock.setFixedTime(new Date('2026-10-14T12:00:00+09:00'));
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     const base = `http://127.0.0.1:${server.address().port}`;
@@ -29,6 +30,28 @@ const path = require('node:path');
     };
     const read = () => page.evaluate(() => JSON.parse(localStorage.getItem('vschedule.v1')));
     const previous = [{ t: '07:00', x: '朝活雑談' }, { t: '21:30', x: 'ゲーム配信' }];
+    await seed({ start: '2026-10-14', days: 1, items: {
+      '2026-09-29': previous, '2026-09-28': [], '2026-09-30': previous,
+      '2026-10-07': previous, '2026-10-14': previous, '2026-12-01': previous
+    } });
+    let retained = (await read()).items;
+    assert.equal(Object.hasOwn(retained, '2026-09-29'), false, 'history older than fourteen days is removed on load');
+    assert.equal(Object.hasOwn(retained, '2026-09-28'), false, 'expired empty-day markers are also removed');
+    assert.deepEqual(retained['2026-09-30'], previous, 'fourteen-day cutoff is inclusive');
+    assert.deepEqual(retained['2026-12-01'], previous, 'future plans are retained');
+    await page.clock.setFixedTime(new Date('2026-10-15T12:00:00+09:00'));
+    await page.locator('.etext').first().fill('翌日の更新');
+    assert.equal(Object.hasOwn((await read()).items, '2026-09-30'), false, 'saving prunes newly expired history');
+    await page.clock.setFixedTime(new Date('2026-10-14T12:00:00+09:00'));
+    await seed({ start: '2026-09-01', days: 2, items: {
+      '2026-08-24': previous, '2026-08-25': previous, '2026-09-01': previous,
+      '2026-09-02': [], '2026-09-30': previous
+    } });
+    retained = (await read()).items;
+    assert.deepEqual(retained['2026-08-25'], previous, 'copy source for an old visible range is retained');
+    assert.deepEqual(retained['2026-09-01'], previous, 'old visible plans are retained');
+    assert.deepEqual(retained['2026-09-02'], [], 'visible empty date is retained');
+    assert.equal(Object.hasOwn(retained, '2026-08-24'), false, 'unrelated expired history is removed');
     await seed({ start: '2026-10-14', days: 1, items: { '2026-10-08': previous } });
     await page.click('#next');
     assert.deepEqual((await read()).items['2026-10-15'], previous);
@@ -55,6 +78,30 @@ const path = require('node:path');
     await seed({ start: '2026-10-14', days: 1, items: {} });
     await page.click('#next');
     assert.deepEqual((await read()).items['2026-10-15'], [], 'no previous week stays empty');
+
+    await seed({ start: '2026-10-14', days: 1, items: { '2026-10-08': previous, '2026-10-09': [{ t: '12:00', x: '昼配信' }] } });
+    await page.click('#dayUp');
+    assert.deepEqual((await read()).items['2026-10-15'], previous, 'day-count increment copies previous week');
+    await page.locator('#dayCount').fill('3');
+    await page.locator('#dayCount').press('Tab');
+    assert.equal((await read()).items['2026-10-16'][0].x, '昼配信', 'typed day-count expansion also copies');
+    await page.locator('[data-date="2026-10-15"] .etext').first().fill('独立したコピー');
+    assert.deepEqual((await read()).items['2026-10-08'], previous);
+    await page.locator('[data-date="2026-10-15"] .del').first().click();
+    await page.locator('[data-date="2026-10-15"] .del').first().click();
+    await page.locator('#dayCount').fill('1');
+    await page.locator('#dayCount').press('Tab');
+    await page.reload();
+    await page.locator('#dayCount').fill('3');
+    await page.locator('#dayCount').press('Tab');
+    assert.deepEqual((await read()).items['2026-10-15'], [], 'shrinking and expanding preserves a cleared date');
+    assert.equal((await read()).items['2026-10-16'][0].x, '昼配信', 'existing tail is preserved');
+    await seed({ start: '2026-12-31', days: 1, items: { '2026-12-25': previous, '2027-01-02': [] } });
+    await page.locator('#dayCount').fill('4');
+    await page.locator('#dayCount').press('Tab');
+    assert.deepEqual((await read()).items['2027-01-01'], previous, 'day-count expansion across year boundary');
+    assert.deepEqual((await read()).items['2027-01-02'], [], 'existing empty tail stays empty');
+    assert.deepEqual((await read()).items['2027-01-03'], [], 'missing previous week stays empty');
 
     await seed({ start: '2026-10-14', days: 1, items: { '2026-10-14': previous } });
     const timeInput = page.locator('.pill').first();
