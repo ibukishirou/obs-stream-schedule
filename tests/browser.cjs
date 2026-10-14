@@ -56,6 +56,56 @@ const path = require('node:path');
     await page.click('#next');
     assert.deepEqual((await read()).items['2026-10-15'], [], 'no previous week stays empty');
 
+    await seed({ start: '2026-10-14', days: 1, items: { '2026-10-14': previous } });
+    const timeInput = page.locator('.pill').first();
+    const titleLeft = await page.locator('.etext').first().evaluate(el => el.getBoundingClientRect().left);
+    assert.equal(await page.locator('.time-control').first().evaluate(el => el.offsetWidth), 67);
+    await timeInput.fill('713');
+    await timeInput.press('Enter');
+    assert.equal((await read()).items['2026-10-14'][0].t, '07:13', 'free minute typing is retained');
+    const wheel = async (hour, deltaY) => timeInput.evaluate((el, args) => {
+      const rect = el.getBoundingClientRect();
+      el.dispatchEvent(new WheelEvent('wheel', { deltaY: args.deltaY,
+        clientX: args.hour ? rect.left + 5 : rect.right - 5, bubbles: true, cancelable: true }));
+    }, { hour, deltaY });
+    await wheel(true, -100);
+    await wheel(false, -100);
+    assert.equal((await read()).items['2026-10-14'][0].t, '08:18', 'hour and minute wheel use independent increments');
+    await timeInput.fill('23:59');
+    await timeInput.press('Enter');
+    await wheel(true, -100);
+    await wheel(false, -100);
+    assert.equal(await timeInput.inputValue(), '23:59', 'wheel is bounded');
+    await page.locator('.time-arrow').first().click();
+    assert.equal(await page.locator('.time-picker select').first().locator('option').count(), 24);
+    assert.equal(await page.locator('.time-picker select').last().locator('option').count(), 60);
+    await page.locator('.time-picker select').first().selectOption('21');
+    await page.locator('.time-picker select').last().selectOption('30');
+    await page.locator('.time-picker-footer button').click();
+    assert.equal((await read()).items['2026-10-14'][0].t, '21:30');
+    await page.locator('.time-arrow').first().click();
+    await page.locator('.time-picker select').last().selectOption('13');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('.time-picker').count(), 0);
+    assert.equal((await read()).items['2026-10-14'][0].t, '21:30', 'Escape discards unconfirmed selection');
+    await timeInput.focus();
+    await page.keyboard.press('Alt+ArrowDown');
+    assert.equal(await page.locator('.time-picker').count(), 1);
+    await page.locator('.etext').first().click();
+    assert.equal(await page.locator('.time-picker').count(), 0, 'outside click dismisses picker');
+    assert.equal(await page.locator('.etext').first().evaluate(el => el.getBoundingClientRect().left), titleLeft);
+    assert.equal((await read()).items['2026-10-14'][0].x, previous[0].x, 'other entry data is unchanged');
+    await page.setViewportSize({ width: 280, height: 250 });
+    await page.locator('.time-arrow').first().click();
+    const pickerBounds = await page.locator('.time-picker').evaluate(el => {
+      const rect = el.getBoundingClientRect();
+      return rect.left >= 0 && rect.right <= innerWidth && rect.top >= 0 && rect.bottom <= innerHeight;
+    });
+    assert.ok(pickerBounds, 'picker fits the narrow OBS dock');
+    await page.keyboard.press('Escape');
+    await page.reload();
+    assert.equal(await timeInput.inputValue(), '21:30', 'chosen time persists');
+
     await page.setViewportSize({ width: 280, height: 900 });
     await page.click('#tab-conf');
     assert.equal(await page.locator('.tabs').evaluate(el => el.getBoundingClientRect().width < 130), true);
