@@ -67,8 +67,17 @@ schedule.simple .line {
 }
 
 
+schedule.simple .date {
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-start;
+	flex: 0 0 var(--date-width, auto);
+	margin-left: 20px;
+	gap: 3px;
+	height: 100%;
+}
 schedule.simple .day {
-	flex: 0 0 88px; height: 100%;
+	flex: none; height: 100%;
 	font-size: 66px;
 	font-weight: 900;
 	line-height: 1em;
@@ -76,8 +85,8 @@ schedule.simple .day {
 	color: #333;
 }
 schedule.simple .month {
-	flex: 0 0 72px; height: 100%;
-	padding: 32px 6px 0 0;
+	flex: none; height: 100%;
+	padding: 32px 0 0;
 	text-align: right;
 	white-space: nowrap; /* 「.」が次の行に折り返されないように */ /* .dow と同じ下端 = 日付のインク下端に揃える(実測) */
 	font-size: 32px;
@@ -86,8 +95,8 @@ schedule.simple .month {
 	color: #333;
 }
 schedule.simple .dow {
-	flex: 0 0 80px; height: 100%;
-	padding: 32px 0 0 10px; /* 20pxから32pxへ: 日付のインク下端に揃える(実測Δ=12px) */
+	flex: 0 0 var(--weekday-width, 80px); height: 100%;
+	padding: 32px 12px 0 10px;
 	font-size: 32px;
 	font-weight: 500;
 	line-height: 1em;
@@ -108,7 +117,7 @@ schedule.simple .time {
 }
 schedule.simple .text {
 	flex: 1 1 0; min-width: 0;
-	margin: 0 0 0 16px; padding: 22px 0 0;
+	margin: 0 0 0 16px; padding: 22px 30px 0 0;
 	color: #333;
 	font-size: 32px;
 	font-weight: 500;
@@ -225,11 +234,11 @@ schedule.tate .text {
 schedule.tate .time.is-empty,
 schedule.tate .text.is-empty { display: none; }
 </style>
-<style id=&quot;vschedule-anim&quot;>schedule .line.vsl .text{text-align:left;}schedule.simple .line.is-off .text{margin-left:136px;}schedule.tate .line .time{width:168px;}schedule.tate .line .text{width:100%;}schedule .line.is-off .time{display:none;}schedule .line.is-off .text{margin-top:0;}schedule{position:relative;}schedule .line{position:relative;z-index:1;}schedule .bgbox{position:absolute;left:40px;top:40px;z-index:0;box-sizing:border-box;width:1316px;height:80px;background:#e00000;border:3px solid transparent;border-radius:8px;}@keyframes vslLines{0.0000%{transform:translateY(0px)}46.4286%{transform:translateY(0px)}50.0000%{transform:translateY(-80px)}96.4286%{transform:translateY(-80px)}100.0000%{transform:translateY(0px)}}schedule .line.vsl{animation-name:vslLines;animation-duration:30.00s;animation-timing-function:ease;animation-iteration-count:infinite;}</style></head>
+<style id=&quot;vschedule-anim&quot;>schedule .line.vsl .text{text-align:left;}schedule.simple .line.is-off .text{margin-left:136px;}schedule.tate .line .time{width:168px;}schedule.tate .line .text{width:100%;}schedule .line.is-off .time{display:none;}schedule .line.is-off .text{margin-top:0;}schedule{position:relative;}schedule .line{position:relative;z-index:1;}schedule .bgbox{position:absolute;left:40px;top:40px;z-index:0;box-sizing:border-box;width:1300px;height:80px;background:#e00000;border:3px solid transparent;border-radius:8px;}@keyframes vslLines{0.0000%{transform:translateY(0px)}46.4286%{transform:translateY(0px)}50.0000%{transform:translateY(-80px)}96.4286%{transform:translateY(-80px)}100.0000%{transform:translateY(0px)}}schedule .line.vsl{animation-name:vslLines;animation-duration:30.00s;animation-timing-function:ease;animation-iteration-count:infinite;}</style></head>
 <body>
 	<h1>V-SCHEDULE</h1>
-	<schedule class=&quot;simple&quot; style=&quot;position: relative; opacity: 1; width: 1396px;&quot;><div class=&quot;bgbox&quot;></div>
-		<inner style=&quot;width: 1316px;&quot;><div class=&quot;line vsl yoko&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>20</p><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Tue</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>07:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>【長時間配信】みんなで冒険！新しい世界を探索するゲーム配信</p></div><div class=&quot;line vsl yoko&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>21</p><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Wed</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>21:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>朝活雑談</p></div></inner>
+	<schedule class=&quot;simple&quot; style=&quot;position: relative; --date-width: 103px; --weekday-width: 83px; opacity: 1; width: 1380px;&quot;><div class=&quot;bgbox&quot;></div>
+		<inner style=&quot;width: 1300px;&quot;><div class=&quot;line vsl yoko&quot;><div class=&quot;date&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>20</p></div><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Tue</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>07:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>【長時間配信】みんなで冒険！新しい世界を探索するゲーム配信</p></div><div class=&quot;line vsl yoko&quot;><div class=&quot;date&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>21</p></div><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Wed</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>21:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>朝活雑談</p></div></inner>
 	</schedule>
 
 
@@ -299,8 +308,17 @@ schedule.simple .line {
 }
 
 
+schedule.simple .date {
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-start;
+	flex: 0 0 var(--date-width, auto);
+	margin-left: 20px;
+	gap: 3px;
+	height: 100%;
+}
 schedule.simple .day {
-	flex: 0 0 88px; height: 100%;
+	flex: none; height: 100%;
 	font-size: 66px;
 	font-weight: 900;
 	line-height: 1em;
@@ -308,8 +326,8 @@ schedule.simple .day {
 	color: #333;
 }
 schedule.simple .month {
-	flex: 0 0 72px; height: 100%;
-	padding: 32px 6px 0 0;
+	flex: none; height: 100%;
+	padding: 32px 0 0;
 	text-align: right;
 	white-space: nowrap; /* 「.」が次の行に折り返されないように */ /* .dow と同じ下端 = 日付のインク下端に揃える(実測) */
 	font-size: 32px;
@@ -318,8 +336,8 @@ schedule.simple .month {
 	color: #333;
 }
 schedule.simple .dow {
-	flex: 0 0 80px; height: 100%;
-	padding: 32px 0 0 10px; /* 20pxから32pxへ: 日付のインク下端に揃える(実測Δ=12px) */
+	flex: 0 0 var(--weekday-width, 80px); height: 100%;
+	padding: 32px 12px 0 10px;
 	font-size: 32px;
 	font-weight: 500;
 	line-height: 1em;
@@ -340,7 +358,7 @@ schedule.simple .time {
 }
 schedule.simple .text {
 	flex: 1 1 0; min-width: 0;
-	margin: 0 0 0 16px; padding: 22px 0 0;
+	margin: 0 0 0 16px; padding: 22px 30px 0 0;
 	color: #333;
 	font-size: 32px;
 	font-weight: 500;
@@ -457,11 +475,11 @@ schedule.tate .text {
 schedule.tate .time.is-empty,
 schedule.tate .text.is-empty { display: none; }
 </style>
-<style id=&quot;vschedule-anim&quot;>schedule .line.vsl .text{text-align:center;}schedule.simple .line.is-off .text{margin-left:136px;}schedule.tate .line .time{width:168px;}schedule.tate .line .text{width:100%;}schedule .line.is-off .time{display:none;}schedule .line.is-off .text{margin-top:0;}schedule{position:relative;}schedule .line{position:relative;z-index:1;}schedule .bgbox{position:absolute;left:40px;top:40px;z-index:0;box-sizing:border-box;width:1316px;height:80px;background:#e00000;border:3px solid transparent;border-radius:8px;}@keyframes vslLines{0.0000%{transform:translateY(0px)}46.4286%{transform:translateY(0px)}50.0000%{transform:translateY(-80px)}96.4286%{transform:translateY(-80px)}100.0000%{transform:translateY(0px)}}schedule .line.vsl{animation-name:vslLines;animation-duration:30.00s;animation-timing-function:ease;animation-iteration-count:infinite;}</style></head>
+<style id=&quot;vschedule-anim&quot;>schedule .line.vsl .text{text-align:center;}schedule.simple .line.is-off .text{margin-left:136px;}schedule.tate .line .time{width:168px;}schedule.tate .line .text{width:100%;}schedule .line.is-off .time{display:none;}schedule .line.is-off .text{margin-top:0;}schedule{position:relative;}schedule .line{position:relative;z-index:1;}schedule .bgbox{position:absolute;left:40px;top:40px;z-index:0;box-sizing:border-box;width:1300px;height:80px;background:#e00000;border:3px solid transparent;border-radius:8px;}@keyframes vslLines{0.0000%{transform:translateY(0px)}46.4286%{transform:translateY(0px)}50.0000%{transform:translateY(-80px)}96.4286%{transform:translateY(-80px)}100.0000%{transform:translateY(0px)}}schedule .line.vsl{animation-name:vslLines;animation-duration:30.00s;animation-timing-function:ease;animation-iteration-count:infinite;}</style></head>
 <body>
 	<h1>V-SCHEDULE</h1>
-	<schedule class=&quot;simple&quot; style=&quot;position: relative; opacity: 1; width: 1396px;&quot;><div class=&quot;bgbox&quot;></div>
-		<inner style=&quot;width: 1316px;&quot;><div class=&quot;line vsl yoko&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>20</p><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Tue</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>07:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>【長時間配信】みんなで冒険！新しい世界を探索するゲーム配信</p></div><div class=&quot;line vsl yoko&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>21</p><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Wed</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>21:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>朝活雑談</p></div></inner>
+	<schedule class=&quot;simple&quot; style=&quot;position: relative; --date-width: 103px; --weekday-width: 83px; opacity: 1; width: 1380px;&quot;><div class=&quot;bgbox&quot;></div>
+		<inner style=&quot;width: 1300px;&quot;><div class=&quot;line vsl yoko&quot;><div class=&quot;date&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>20</p></div><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Tue</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>07:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>【長時間配信】みんなで冒険！新しい世界を探索するゲーム配信</p></div><div class=&quot;line vsl yoko&quot;><div class=&quot;date&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>21</p></div><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Wed</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>21:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>朝活雑談</p></div></inner>
 	</schedule>
 
 

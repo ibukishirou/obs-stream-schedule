@@ -98,6 +98,30 @@ const path = require('node:path');
         assert.ok(result.gap >= 0, 'month must not overlap day');
         assert.equal(result.bg, result.inner, 'auto background must fit shared content width');
         assert.ok(result.card < 1600, 'hidden dates must not affect auto width');
+        if (theme === 'yoko') {
+          const spacing = await page.evaluate(() => {
+            const row = document.querySelector('.line');
+            function textRect(selector) {
+              const range = document.createRange();
+              range.selectNodeContents(row.querySelector(selector));
+              return range.getBoundingClientRect();
+            }
+            const month = textRect('.month'), day = textRect('.day'), dow = textRect('.dow');
+            const time = textRect('.time'), title = textRect('.text');
+            const clock = getComputedStyle(row.querySelector('.time'));
+            const box = document.querySelector('.bgbox').getBoundingClientRect();
+            return { monthDay: day.left - month.right, dayDow: dow.left - day.right,
+              right: box.right - title.right, centerDifference: Math.abs((time.top + time.bottom - title.top - title.bottom) / 2),
+              clockPadding: clock.padding, clockWeight: clock.fontWeight, clockMargins: [clock.marginTop, clock.marginBottom] };
+          });
+          assert.ok(Math.abs(spacing.monthDay - 3) < .1, 'selected month/day gap');
+          assert.ok(Math.abs(spacing.dayDow - 10) < .1, 'selected day/weekday gap');
+          assert.ok(spacing.right >= 30 && spacing.right < 32, 'selected trailing inset');
+          assert.ok(spacing.centerDifference < .1, 'title and clock text vertical alignment');
+          assert.equal(spacing.clockPadding, '2px 10px 0px');
+          assert.equal(spacing.clockWeight, '700');
+          assert.deepEqual(spacing.clockMargins, ['20px', '20px']);
+        }
         if (theme === 'yoko') snapshots.push({ titleAlign, html: await page.content() });
         console.log(`PASS ${theme}/${titleAlign}`, result);
       }
@@ -105,6 +129,16 @@ const path = require('node:path');
     await seed({ ...state, autoWidth: false });
     await page.goto(base + '/view.html');
     assert.equal(await page.locator('schedule').evaluate(el => el.offsetWidth), 880, 'manual mode retains fixed card');
+    await seed({ ...state, start: '2026-11-01', days: 2, items: { '2026-11-01': [{ t: '07:00', x: '朝活雑談' }] } });
+    await page.goto(base + '/view.html');
+    await page.evaluate(() => document.fonts.ready);
+    const singleDayGap = await page.locator('.line').first().evaluate(row => {
+      const day = document.createRange(), dow = document.createRange();
+      day.selectNodeContents(row.querySelector('.day'));
+      dow.selectNodeContents(row.querySelector('.dow'));
+      return dow.getBoundingClientRect().left - day.getBoundingClientRect().right;
+    });
+    assert.ok(Math.abs(singleDayGap - 10) < .1, 'one-digit day is equally close to weekday');
     await seed({ ...state, autoWidth: true, items: {} });
     await page.goto(base + '/view.html');
     assert.ok(await page.locator('schedule').evaluate(el => el.offsetWidth > 80));
