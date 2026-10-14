@@ -202,7 +202,6 @@ input[type="range"]:disabled { opacity: .35; }
 .background-options[hidden], .field[hidden] { display: none; }
 .panel .sect { gap: 5px; }
 .panel .field > .flabel { display: flex; align-items: center; gap: 4px; flex: 0 0 98px; }
-.panel .color-field > .flabel { flex: 1; }
 .panel .checklabel { font-size: 11px; }
 .field.is-disabled { opacity: .4; }
 .field.is-disabled input { pointer-events: none; }
