@@ -1,0 +1,468 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><title>タイトル揃えの比較</title>
+        <style>body{background:#111318;color:#eef1f5;font:16px system-ui;margin:24px}h1{font-size:22px}h2{font-size:16px;margin:20px 0 8px}iframe{display:block;border:0;width:1550px;height:180px}p{color:#b9c2ce}</style>
+        <h1>横幅：自動 — タイトル揃えの比較</h1><p>全予定で最長タイトルに合わせた同じ横幅。長い予定と短い予定を並べて比較。</p>
+        <h2>左揃え</h2><iframe style="height:240px" srcdoc="<!DOCTYPE html><html><head><style>schedule .line.vsl{animation:none!important}schedule{height:240px!important}schedule inner{height:160px!important}schedule .bgbox{height:160px!important;top:40px!important}</style>
+	<meta charset=&quot;utf-8&quot;>
+	<meta http-equiv=&quot;content-language&quot; content=&quot;ja&quot;>
+	<title>V-Schedule</title>
+	
+	<style>@charset &quot;UTF-8&quot;;
+
+* {
+	margin: 0; padding: 0;
+	box-sizing: border-box;
+	list-style-type: none;
+	word-wrap: break-word;
+}
+
+h1 { display: none; }
+
+schedule, inner { display: block; }
+
+/* 予定なし(お休み)の日: 色はほかの日と同じ(暗転なし)。時刻だけ要素ごと非表示 */
+schedule .line.is-off .time { display: none; }
+schedule .line.is-off .text { margin-top: 0; }
+
+/* 背景(カード枠と「これからの予定」)は使わない — 日付/曜日/時間/タイトルだけを表示 */
+schedule, schedule.simple, schedule.tate { background: none !important; }
+</style>
+	<style>@charset &quot;UTF-8&quot;;
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;900&amp;display=swap');
+
+schedule.simple {
+	width: 880px; height: 160px;
+	padding: 40px;
+	font-family: &quot;Zen Maru Gothic&quot;, system-ui;
+	font-weight: 500;
+	font-style: normal;
+	background: url(&quot;frame.svg&quot;);
+}
+
+schedule.simple inner {
+	width: 800px; height: 80px;
+	overflow: hidden;
+}
+
+schedule.simple .line {
+	width: 100%; height: 80px;
+	display: flex;
+	animation: linesSimple 60s ease infinite;
+}
+@keyframes linesSimple {
+	  0% { transform: translateY(0); }
+	 13% { transform: translateY(0); }
+	 14% { transform: translateY(-80px); }
+	 27% { transform: translateY(-80px); }
+	 28% { transform: translateY(-160px); }
+	 41% { transform: translateY(-160px); }
+	 42% { transform: translateY(-240px); }
+	 55% { transform: translateY(-240px); }
+	 56% { transform: translateY(-320px); }
+	 69% { transform: translateY(-320px); }
+	 70% { transform: translateY(-400px); }
+	 83% { transform: translateY(-400px); }
+	 84% { transform: translateY(-480px); }
+	 97% { transform: translateY(-480px); }
+	100% { transform: translateY(0); }
+}
+
+
+schedule.simple .day {
+	flex: 0 0 88px; height: 100%;
+	font-size: 66px;
+	font-weight: 900;
+	line-height: 1em;
+	text-align: right;
+	color: #333;
+}
+schedule.simple .month {
+	flex: 0 0 72px; height: 100%;
+	padding: 32px 6px 0 0;
+	text-align: right;
+	white-space: nowrap; /* 「.」が次の行に折り返されないように */ /* .dow と同じ下端 = 日付のインク下端に揃える(実測) */
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	color: #333;
+}
+schedule.simple .dow {
+	flex: 0 0 80px; height: 100%;
+	padding: 32px 0 0 10px; /* 20pxから32pxへ: 日付のインク下端に揃える(実測Δ=12px) */
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	color: #333;
+}
+schedule.simple .time {
+	flex: 0 0 120px;
+	margin: 20px 0; padding: 2px 10px 0; /* 文字を上下中央へ(32px bold 実測) */
+	text-align: center;
+	background: #333;
+	color: #fff;
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 1em;
+	border-radius: 10px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+schedule.simple .text {
+	flex: 1 1 0; min-width: 0;
+	margin: 0 0 0 16px; padding: 22px 0 0;
+	color: #333;
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	border-radius: 10px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+</style>
+	<style>@charset &quot;UTF-8&quot;;
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;900&amp;display=swap');
+
+/* --------------------------------------------------------------------------
+   V-Schedule &quot;縦&quot; view — the SAME card and the SAME elements as the simple
+   skin, just stacked into three centred rows:
+       (1) month + date + weekday   (2) time badge   (3) title
+   The frame, the font and the colours are the simple skin's own; nothing new
+   is drawn here. The &quot;横&quot; (simple) skin is untouched.
+
+   Sizes are the skin's own numbers on purpose — 横 and 縦 swap without the
+   type changing size:  month 32 / date 66 / weekday 32 / clock 32 (bold) / title 32.
+   The stacked rows use the whole 160px card, which fits the 154px they need.
+   -------------------------------------------------------------------------- */
+schedule.tate {
+	width: 880px; height: 160px;
+	padding: 0 40px;
+	display: block;
+	font-family: &quot;Zen Maru Gothic&quot;, system-ui;
+	font-weight: 500;
+	font-style: normal;
+	background: url(&quot;../skin/simple/frame.svg&quot;);
+}
+
+schedule.tate inner {
+	width: 800px; height: 160px;
+	overflow: hidden;
+}
+
+schedule.tate .line {
+	width: 100%; height: 160px;
+	/* 3段(154px)を 7.5px 上へ寄せて、文字のインクがカードの上下中心に来るようにする */
+	padding-bottom: 15px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	animation: vslLines 60s ease infinite;
+}
+
+schedule.tate .l1 {
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	gap: 6px;
+}
+
+schedule.tate .day {
+	font-size: 66px;
+	font-weight: 900;
+	line-height: 1em;
+	text-align: center;
+	color: #333;
+}
+
+schedule.tate .dow {
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	text-align: center;
+	color: #333;
+}
+
+schedule.tate .month {
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	text-align: center;
+	color: #333;
+}
+
+schedule.tate .time {
+	width: 21%;
+	margin: 6px 0 0;
+	padding: 3px 10px 9px; /* 上下非対称: 文字を実測で上下中央へ */
+	text-align: center;
+	background: #333;
+	color: #fff;
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 1em;
+	border-radius: 10px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+schedule.tate .text {
+	max-width: 100%;
+	/* 下に8pxの逃がし(実測: ゼン丸ゴシックのインクは line-height:1 だと
+	   32pxの箱の下へ最大4.5pxはみ出す)。marginで相殺するので積みの高さは変わらない */
+	margin: 6px 0 -8px;
+	padding-bottom: 8px;
+	text-align: center;
+	color: #333;
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* a day without an entry keeps the same look but drops the empty pieces */
+schedule.tate .time.is-empty,
+schedule.tate .text.is-empty { display: none; }
+</style>
+<style id=&quot;vschedule-anim&quot;>schedule .line.vsl .text{text-align:left;}schedule.simple .line.is-off .text{margin-left:136px;}schedule.tate .line .time{width:168px;}schedule.tate .line .text{width:100%;}schedule .line.is-off .time{display:none;}schedule .line.is-off .text{margin-top:0;}schedule{position:relative;}schedule .line{position:relative;z-index:1;}schedule .bgbox{position:absolute;left:40px;top:40px;z-index:0;box-sizing:border-box;width:1316px;height:80px;background:#e00000;border:3px solid transparent;border-radius:8px;}@keyframes vslLines{0.0000%{transform:translateY(0px)}46.4286%{transform:translateY(0px)}50.0000%{transform:translateY(-80px)}96.4286%{transform:translateY(-80px)}100.0000%{transform:translateY(0px)}}schedule .line.vsl{animation-name:vslLines;animation-duration:30.00s;animation-timing-function:ease;animation-iteration-count:infinite;}</style></head>
+<body>
+	<h1>V-SCHEDULE</h1>
+	<schedule class=&quot;simple&quot; style=&quot;position: relative; opacity: 1; width: 1396px;&quot;><div class=&quot;bgbox&quot;></div>
+		<inner style=&quot;width: 1316px;&quot;><div class=&quot;line vsl yoko&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>20</p><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Tue</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>07:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>【長時間配信】みんなで冒険！新しい世界を探索するゲーム配信</p></div><div class=&quot;line vsl yoko&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>21</p><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Wed</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>21:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>朝活雑談</p></div></inner>
+	</schedule>
+
+
+</body></html>"></iframe><h2>中央揃え</h2><iframe style="height:240px" srcdoc="<!DOCTYPE html><html><head><style>schedule .line.vsl{animation:none!important}schedule{height:240px!important}schedule inner{height:160px!important}schedule .bgbox{height:160px!important;top:40px!important}</style>
+	<meta charset=&quot;utf-8&quot;>
+	<meta http-equiv=&quot;content-language&quot; content=&quot;ja&quot;>
+	<title>V-Schedule</title>
+	
+	<style>@charset &quot;UTF-8&quot;;
+
+* {
+	margin: 0; padding: 0;
+	box-sizing: border-box;
+	list-style-type: none;
+	word-wrap: break-word;
+}
+
+h1 { display: none; }
+
+schedule, inner { display: block; }
+
+/* 予定なし(お休み)の日: 色はほかの日と同じ(暗転なし)。時刻だけ要素ごと非表示 */
+schedule .line.is-off .time { display: none; }
+schedule .line.is-off .text { margin-top: 0; }
+
+/* 背景(カード枠と「これからの予定」)は使わない — 日付/曜日/時間/タイトルだけを表示 */
+schedule, schedule.simple, schedule.tate { background: none !important; }
+</style>
+	<style>@charset &quot;UTF-8&quot;;
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;900&amp;display=swap');
+
+schedule.simple {
+	width: 880px; height: 160px;
+	padding: 40px;
+	font-family: &quot;Zen Maru Gothic&quot;, system-ui;
+	font-weight: 500;
+	font-style: normal;
+	background: url(&quot;frame.svg&quot;);
+}
+
+schedule.simple inner {
+	width: 800px; height: 80px;
+	overflow: hidden;
+}
+
+schedule.simple .line {
+	width: 100%; height: 80px;
+	display: flex;
+	animation: linesSimple 60s ease infinite;
+}
+@keyframes linesSimple {
+	  0% { transform: translateY(0); }
+	 13% { transform: translateY(0); }
+	 14% { transform: translateY(-80px); }
+	 27% { transform: translateY(-80px); }
+	 28% { transform: translateY(-160px); }
+	 41% { transform: translateY(-160px); }
+	 42% { transform: translateY(-240px); }
+	 55% { transform: translateY(-240px); }
+	 56% { transform: translateY(-320px); }
+	 69% { transform: translateY(-320px); }
+	 70% { transform: translateY(-400px); }
+	 83% { transform: translateY(-400px); }
+	 84% { transform: translateY(-480px); }
+	 97% { transform: translateY(-480px); }
+	100% { transform: translateY(0); }
+}
+
+
+schedule.simple .day {
+	flex: 0 0 88px; height: 100%;
+	font-size: 66px;
+	font-weight: 900;
+	line-height: 1em;
+	text-align: right;
+	color: #333;
+}
+schedule.simple .month {
+	flex: 0 0 72px; height: 100%;
+	padding: 32px 6px 0 0;
+	text-align: right;
+	white-space: nowrap; /* 「.」が次の行に折り返されないように */ /* .dow と同じ下端 = 日付のインク下端に揃える(実測) */
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	color: #333;
+}
+schedule.simple .dow {
+	flex: 0 0 80px; height: 100%;
+	padding: 32px 0 0 10px; /* 20pxから32pxへ: 日付のインク下端に揃える(実測Δ=12px) */
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	color: #333;
+}
+schedule.simple .time {
+	flex: 0 0 120px;
+	margin: 20px 0; padding: 2px 10px 0; /* 文字を上下中央へ(32px bold 実測) */
+	text-align: center;
+	background: #333;
+	color: #fff;
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 1em;
+	border-radius: 10px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+schedule.simple .text {
+	flex: 1 1 0; min-width: 0;
+	margin: 0 0 0 16px; padding: 22px 0 0;
+	color: #333;
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	border-radius: 10px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+</style>
+	<style>@charset &quot;UTF-8&quot;;
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;900&amp;display=swap');
+
+/* --------------------------------------------------------------------------
+   V-Schedule &quot;縦&quot; view — the SAME card and the SAME elements as the simple
+   skin, just stacked into three centred rows:
+       (1) month + date + weekday   (2) time badge   (3) title
+   The frame, the font and the colours are the simple skin's own; nothing new
+   is drawn here. The &quot;横&quot; (simple) skin is untouched.
+
+   Sizes are the skin's own numbers on purpose — 横 and 縦 swap without the
+   type changing size:  month 32 / date 66 / weekday 32 / clock 32 (bold) / title 32.
+   The stacked rows use the whole 160px card, which fits the 154px they need.
+   -------------------------------------------------------------------------- */
+schedule.tate {
+	width: 880px; height: 160px;
+	padding: 0 40px;
+	display: block;
+	font-family: &quot;Zen Maru Gothic&quot;, system-ui;
+	font-weight: 500;
+	font-style: normal;
+	background: url(&quot;../skin/simple/frame.svg&quot;);
+}
+
+schedule.tate inner {
+	width: 800px; height: 160px;
+	overflow: hidden;
+}
+
+schedule.tate .line {
+	width: 100%; height: 160px;
+	/* 3段(154px)を 7.5px 上へ寄せて、文字のインクがカードの上下中心に来るようにする */
+	padding-bottom: 15px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	animation: vslLines 60s ease infinite;
+}
+
+schedule.tate .l1 {
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	gap: 6px;
+}
+
+schedule.tate .day {
+	font-size: 66px;
+	font-weight: 900;
+	line-height: 1em;
+	text-align: center;
+	color: #333;
+}
+
+schedule.tate .dow {
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	text-align: center;
+	color: #333;
+}
+
+schedule.tate .month {
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	text-align: center;
+	color: #333;
+}
+
+schedule.tate .time {
+	width: 21%;
+	margin: 6px 0 0;
+	padding: 3px 10px 9px; /* 上下非対称: 文字を実測で上下中央へ */
+	text-align: center;
+	background: #333;
+	color: #fff;
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 1em;
+	border-radius: 10px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+schedule.tate .text {
+	max-width: 100%;
+	/* 下に8pxの逃がし(実測: ゼン丸ゴシックのインクは line-height:1 だと
+	   32pxの箱の下へ最大4.5pxはみ出す)。marginで相殺するので積みの高さは変わらない */
+	margin: 6px 0 -8px;
+	padding-bottom: 8px;
+	text-align: center;
+	color: #333;
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 1em;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* a day without an entry keeps the same look but drops the empty pieces */
+schedule.tate .time.is-empty,
+schedule.tate .text.is-empty { display: none; }
+</style>
+<style id=&quot;vschedule-anim&quot;>schedule .line.vsl .text{text-align:center;}schedule.simple .line.is-off .text{margin-left:136px;}schedule.tate .line .time{width:168px;}schedule.tate .line .text{width:100%;}schedule .line.is-off .time{display:none;}schedule .line.is-off .text{margin-top:0;}schedule{position:relative;}schedule .line{position:relative;z-index:1;}schedule .bgbox{position:absolute;left:40px;top:40px;z-index:0;box-sizing:border-box;width:1316px;height:80px;background:#e00000;border:3px solid transparent;border-radius:8px;}@keyframes vslLines{0.0000%{transform:translateY(0px)}46.4286%{transform:translateY(0px)}50.0000%{transform:translateY(-80px)}96.4286%{transform:translateY(-80px)}100.0000%{transform:translateY(0px)}}schedule .line.vsl{animation-name:vslLines;animation-duration:30.00s;animation-timing-function:ease;animation-iteration-count:infinite;}</style></head>
+<body>
+	<h1>V-SCHEDULE</h1>
+	<schedule class=&quot;simple&quot; style=&quot;position: relative; opacity: 1; width: 1396px;&quot;><div class=&quot;bgbox&quot;></div>
+		<inner style=&quot;width: 1316px;&quot;><div class=&quot;line vsl yoko&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>20</p><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Tue</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>07:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>【長時間配信】みんなで冒険！新しい世界を探索するゲーム配信</p></div><div class=&quot;line vsl yoko&quot;><p class=&quot;month&quot; style=&quot;color: rgb(255, 255, 255);&quot;>10.</p><p class=&quot;day&quot; style=&quot;color: rgb(255, 255, 255);&quot;>21</p><p class=&quot;dow&quot; style=&quot;color: rgb(255, 255, 255);&quot;>Wed</p><p class=&quot;time&quot; style=&quot;background: rgb(255, 255, 255); color: rgb(224, 0, 0);&quot;>21:00</p><p class=&quot;text&quot; style=&quot;color: rgb(255, 255, 255);&quot;>朝活雑談</p></div></inner>
+	</schedule>
+
+
+</body></html>"></iframe>

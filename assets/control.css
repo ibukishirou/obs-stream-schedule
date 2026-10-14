@@ -46,29 +46,33 @@ header {
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	height: 55px;
-	padding: 0 9px;
+	height: 38px;
+	padding: 0 6px;
 	background: var(--bg);
 	border-bottom: 1px solid var(--line);
 }
 
 /* 予定 / 設定 のタブ */
-.tabs { display: flex; align-items: center; gap: 4px; }
+.tabs { display: flex; align-items: stretch; gap: 0; height: 100%; }
 .tab {
-	height: 33px;
-	padding: 0 20px;
+	padding: 0 12px;
 	background: transparent;
-	border: 1px solid transparent;
-	border-radius: var(--radius);
+	border: 0;
+	border-bottom: 2px solid transparent;
+	border-radius: 0;
 	color: var(--muted);
 	font: inherit;
 	font-size: 13px;
 	font-weight: 500;
 	cursor: pointer;
-	transition: background .12s ease, color .12s ease, border-color .12s ease;
 }
 .tab:hover { color: var(--text); }
-.tab.is-on { background: var(--field); border-color: var(--border); color: var(--text); }
+.tab.is-on { border-bottom-color: var(--accent); color: var(--text); }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.checklabel { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.checklabel input { accent-color: var(--accent); }
+select { background: var(--field); color: var(--text); border: 1px solid var(--border); padding: 5px; border-radius: 4px; }
+input[type="range"]:disabled { opacity: .35; }
 
 .tabpane { display: none; }
 .tabpane.is-on { display: block; }

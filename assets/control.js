@@ -116,6 +116,7 @@ function normTime(v) {
 /* ----------------------------------------------------------------- state */
 var state = {
 	start: "", days: DEFAULT_DAYS, items: {},
+	autoWidth: false, titleAlign: "left",
 	viewColor: DEFAULT_VIEW_COLOR, clockColor: DEFAULT_CLOCK_COLOR, viewOpacity: DEFAULT_VIEW_OPACITY,
 	bgOn: DEFAULT_BG_ON, bgFill: DEFAULT_BG_FILL, bgBorder: DEFAULT_BG_BORDER,
 	bgBorderColor: DEFAULT_BG_BORDER_COLOR, bgW: DEFAULT_BG_W, bgH: DEFAULT_BG_H, corner: DEFAULT_CORNER,
@@ -148,6 +149,8 @@ function gaugeGet(k) { return state[gaugeKey(k)]; }
 function gaugeSet(k, v) { state[gaugeKey(k)] = v; }
 
 function load() {
+	state.autoWidth = false;
+	state.titleAlign = "left";
 	state.start = todayISO();
 	state.days = DEFAULT_DAYS;
 	state.items = {};
@@ -174,6 +177,8 @@ function load() {
 	try { o = JSON.parse(raw); } catch (e) { return; }
 	if (!o || typeof o !== "object") return;
 
+	if (typeof o.autoWidth === "boolean") state.autoWidth = o.autoWidth;
+	if (o.titleAlign === "center") state.titleAlign = "center";
 	if (isISO(o.start)) state.start = o.start;
 	var n = parseInt(o.days, 10);
 	if (!isNaN(n)) state.days = Math.max(1, Math.min(MAX_DAYS, n));
@@ -212,7 +217,7 @@ function load() {
 					x: String(it.x == null ? "" : it.x)
 				});
 			}
-			if (arr.length) state.items[k] = arr;
+			state.items[k] = arr;
 		}
 	}
 }
@@ -221,13 +226,15 @@ function save() {
 	var keep = {};
 	for (var k in state.items) {
 		if (Object.prototype.hasOwnProperty.call(state.items, k) &&
-			Array.isArray(state.items[k]) && state.items[k].length) {
+			Array.isArray(state.items[k])) {
 			keep[k] = state.items[k];
 		}
 	}
 	state.items = keep;
 	try {
 		localStorage.setItem(STORE_KEY, JSON.stringify({
+			autoWidth: state.autoWidth,
+			titleAlign: state.titleAlign,
 			start: state.start,
 			days: state.days,
 			items: state.items,
@@ -454,6 +461,8 @@ function focusEntry(spec) {
 
 /* ------------------------------------------------------------------- ui */
 function syncHeader() {
+	els.autoWidth.checked = state.autoWidth;
+	els.titleAlign.value = state.titleAlign;
 	els.count.value = state.days;
 	els.viewColor.value = state.viewColor;
 	els.clockColor.value = state.clockColor;
@@ -492,6 +501,7 @@ function setTab(name) {
 		on = els.tabBtns[i].getAttribute("data-tab") === name;
 		els.tabBtns[i].className = "tab" + (on ? " is-on" : "");
 		els.tabBtns[i].setAttribute("aria-selected", on ? "true" : "false");
+		els.tabBtns[i].tabIndex = on ? 0 : -1;
 	}
 	for (i = 0; i < els.panes.length; i++) {
 		on = els.panes[i].getAttribute("data-pane") === name;
@@ -513,7 +523,7 @@ function setBg(on) {
 	var dis = !state.bgOn;
 	els.bgFill.disabled = dis;
 	els.bgBorderColor.disabled = dis;
-	els.bgW.disabled = dis;
+	els.bgW.disabled = dis || state.autoWidth;
 	els.bgH.disabled = dis;
 	els.corner.disabled = dis;
 	for (i = 0; i < els.bgBorderBtns.length; i++) els.bgBorderBtns[i].disabled = dis;
@@ -573,7 +583,19 @@ function setDays(n) {
 
 /* ◀ / ▶ はどちらも開始日を1日ずらすだけ。今日は今日へ戻す */
 function step(delta) {
+	var oldStart = state.start;
 	state.start = addDays(state.start, delta);
+	if (delta > 0) {
+		for (var i = 0; i < state.days; i++) {
+			var iso = addDays(state.start, i);
+			if (iso <= addDays(oldStart, state.days - 1) ||
+				Object.prototype.hasOwnProperty.call(state.items, iso)) continue;
+			/* Keep an empty array too: a deliberately cleared date must stay empty. */
+			state.items[iso] = readItems(addDays(iso, -7)).map(function (item) {
+				return { t: item.t, x: item.x };
+			});
+		}
+	}
 	save();
 	render();
 }
@@ -585,6 +607,17 @@ function goToday() {
 }
 
 function init() {
+	els.autoWidth = document.getElementById("autoWidth");
+	els.titleAlign = document.getElementById("titleAlign");
+	els.autoWidth.addEventListener("change", function () {
+		state.autoWidth = els.autoWidth.checked;
+		syncHeader();
+		save();
+	});
+	els.titleAlign.addEventListener("change", function () {
+		state.titleAlign = els.titleAlign.value === "center" ? "center" : "left";
+		save();
+	});
 	els.rows = document.getElementById("rows");
 	els.tabBtns = document.querySelectorAll(".tab[data-tab]");
 	els.panes = document.querySelectorAll(".tabpane[data-pane]");
@@ -621,6 +654,19 @@ function init() {
 	els.today.addEventListener("click", goToday);
 
 	setTab("sched");
+	document.querySelector(".tabs").addEventListener("keydown", function (ev) {
+		var tabs = Array.prototype.slice.call(els.tabBtns);
+		var index = tabs.indexOf(document.activeElement);
+		if (index < 0) return;
+		if (ev.key === "ArrowRight") index = (index + 1) % tabs.length;
+		else if (ev.key === "ArrowLeft") index = (index + tabs.length - 1) % tabs.length;
+		else if (ev.key === "Home") index = 0;
+		else if (ev.key === "End") index = tabs.length - 1;
+		else return;
+		ev.preventDefault();
+		setTab(tabs[index].getAttribute("data-tab"));
+		tabs[index].focus();
+	});
 	for (var tb = 0; tb < els.tabBtns.length; tb++) {
 		els.tabBtns[tb].addEventListener("click", function () {
 			setTab(this.getAttribute("data-tab"));

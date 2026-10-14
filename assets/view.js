@@ -71,7 +71,7 @@ var BG_MAX_H_TATE = 150;    /* % — 縦の縦幅の上限。カードの上下�
 var DEFAULT_SHOW_OFF = true;/* 予定のない日(お休み)を出すか */
 var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 var OFF_TEXT = "お休み";
-window.VS_BUILD = "20260925h";
+window.VS_BUILD = "20261014a";
 
 function pad2(n) { return (n < 10 ? "0" : "") + n; }
 function toISO(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
@@ -82,7 +82,7 @@ function todayISO() { return toISO(new Date()); }
 
 function read() {
 	var st = {
-		start: todayISO(), days: 7, items: {},
+		start: todayISO(), days: 7, items: {}, autoWidth: false, titleAlign: "left",
 		viewColor: DEFAULT_COLOR, clockColor: DEFAULT_CLOCK, viewOpacity: DEFAULT_OPACITY,
 		bgOn: false, bgFill: BG_DEFAULT_FILL, bgBorder: true,
 		bgBorderColor: BG_DEFAULT_BORDER_COLOR, bgW: 100, bgH: 100, corner: 10,
@@ -96,6 +96,8 @@ function read() {
 	try { o = JSON.parse(raw); } catch (e) { return st; }
 	if (!o || typeof o !== "object") return st;
 
+	if (typeof o.autoWidth === "boolean") st.autoWidth = o.autoWidth;
+	if (o.titleAlign === "center") st.titleAlign = "center";
 	if (isISO(o.start)) st.start = o.start;
 	var n = parseInt(o.days, 10);
 	if (!isNaN(n)) st.days = Math.max(1, Math.min(31, n));
@@ -228,7 +230,7 @@ function measureBox(schedule, cls) {
         高さはカードの上下へもはみ出して伸ばせる(上下同じ距離)。
    border-box + 実線ボーダーなので、フチを足しても外形は動かない。 */
 function boxCSS(cls, st, g) {
-	var w = Math.round(g.innerW * st.bgW / 100);
+	var w = Math.round(g.innerW * (st.autoWidth ? 100 : st.bgW) / 100);
 	var h = Math.round(g.contentH * st.bgH / 100);
 	var maxW = cls === "tate" ? g.card.w : (g.card.w - g.innerL);
 	if (w > maxW) w = maxW;
@@ -272,7 +274,7 @@ function buildCSS(lines, cls, st, g) {
 	var css = "";
 
 	if (cls === "tate") {
-		css += "schedule.tate inner{width:800px;height:160px;overflow:hidden;}"
+		css += "schedule.tate inner{height:160px;overflow:hidden;}"
 			+ base + "{width:100%;height:160px;padding-bottom:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;}"
 			+ base + " .l1{display:flex;align-items:baseline;justify-content:center;gap:6px;}"
 			+ base + " .day" + reset + base + " .day{font-size:" + F_DAY + "px;font-weight:900;line-height:1em;text-align:center;}"
@@ -282,6 +284,11 @@ function buildCSS(lines, cls, st, g) {
 			+ base + " .text" + reset + base + " .text{max-width:100%;margin:6px 0 -8px;padding-bottom:8px;text-align:center;font-size:" + F_TEXT + "px;font-weight:500;line-height:1em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}"
 			+ base + " .time.is-empty," + base + " .text.is-empty{display:none;}";
 	}
+
+	css += "schedule .line.vsl .text{text-align:" + st.titleAlign + ";}"
+		+ "schedule.simple .line.is-off .text{margin-left:136px;}";
+	if (st.autoWidth) css += "schedule.tate .line .time{width:168px;}"
+		+ "schedule.tate .line .text{width:100%;}";
 
 	/* お休みの日 — 色はほかの日と同じ(薄め・暗転はしない)。
 	   空の時刻バッジが出ないように .time だけ非表示にする */
@@ -332,8 +339,7 @@ function textCell(value, color, markEmpty) {
 	return p;
 }
 
-/* 横 — simple skin の並び + 月(縦と同じ month + day + dow)。
-   day の幅から月のぶんを回すので、時計とタイトルは行ごと月の分だけ右へずれる(要素間隔は不変) */
+/* 横 — 月・日・曜日・時計は固定幅、タイトルは残りの共通幅。 */
 function yokoLine(l, color, clock) {
 	var div = document.createElement("div");
 	div.className = "line vsl yoko" + (l.off ? " is-off" : "");
@@ -362,6 +368,34 @@ function tateLine(l, color, clock) {
 	return div;
 }
 
+/* Measure every visible title in its actual font; keep one width for the entire loop.
+   DOM measurement also accounts for fallback fonts and mixed Japanese/Latin text. */
+function sizeToTitles(schedule, inner, st, cls) {
+	schedule.style.width = "";
+	inner.style.width = "";
+	if (!st.autoWidth) return;
+	var probe = document.createElement("span");
+	probe.style.cssText = "position:absolute;visibility:hidden;white-space:pre;width:max-content;";
+	schedule.appendChild(probe);
+	var titles = inner.querySelectorAll(".text"), widest = 0;
+	for (var i = 0; i < titles.length; i++) {
+		var font = window.getComputedStyle(titles[i]);
+		probe.style.fontFamily = font.fontFamily;
+		probe.style.fontSize = font.fontSize;
+		probe.style.fontWeight = font.fontWeight;
+		probe.style.letterSpacing = font.letterSpacing;
+		probe.textContent = titles[i].textContent;
+		widest = Math.max(widest, probe.getBoundingClientRect().width);
+	}
+	schedule.removeChild(probe);
+	/* Horizontal columns: month 72 + day 88 + weekday 80 + clock 120 + gap 16.
+	   The small trailing inset protects ink and background borders. */
+	var width = cls === "tate" ? Math.max(260, Math.ceil(widest) + 12)
+		: 376 + Math.ceil(widest) + 12;
+	inner.style.width = width + "px";
+	schedule.style.width = (width + 80) + "px";
+}
+
 function build() {
 	var schedule = document.querySelector("schedule");
 	if (!schedule) return;
@@ -384,6 +418,10 @@ function build() {
 	schedule.style.position = "relative";
 	/* 先にテーマのクラスを入れてから測る — 先に測ると別のレイアウトを測ってしまう */
 	schedule.className = cls;
+	/* Remove previous generated theme rules before measuring a changed theme. */
+	var previousStyle = document.getElementById(STYLE_ID);
+	if (previousStyle) previousStyle.remove();
+	sizeToTitles(schedule, inner, st, cls);
 	var g;
 	try {
 		g = measureBox(schedule, cls);
@@ -422,16 +460,18 @@ function build() {
 	window.VS_OPACITY = st.viewOpacity;
 }
 
-/* Webフォントが後から届くと、インクの測り方が変わる。縦+背景ONのときだけ
-   読み込み完了後と load 後に測り直す(横レイアウトは何も変わらない)。 */
+/* Webフォントの読み込み後は自動横幅と縦の背景を測り直す。 */
 function rebuildForFont() {
 	var st = read();
-	if (!st.bgOn || st.theme !== "tate") return;
+	if (!st.autoWidth && (!st.bgOn || st.theme !== "tate")) return;
 	build();
 }
 
 function start() {
 	build();
+	if (document.fonts && document.fonts.addEventListener) {
+		document.fonts.addEventListener("loadingdone", rebuildForFont);
+	}
 	if (typeof document !== "undefined" && document.fonts && document.fonts.ready &&
 		typeof document.fonts.ready.then === "function") {
 		document.fonts.ready.then(function () { rebuildForFont(); });
